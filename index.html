@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyan">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GWiCS: AI vs Human Showdown | Can You Spot The Machine?</title>
+  <meta name="description" content="AI vs Human: The Ultimate Showdown presented by Graduate Women in Computing Sciences (GWiCS) at NJIT. 4 competitive rounds testing visual, literary, and vocal deception.">
+  
+  <!-- Google Fonts: Unbounded (Display), Plus Jakarta Sans (Body), JetBrains Mono (Code/Mono), Newsreader (Serif Poetry) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Master Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/arena.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       HEADER & NAVIGATION
+       ======================================================================== -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <!-- Brand Emblem -->
+      <a href="#" class="brand-link" aria-label="GWiCS AI vs Human Home">
+        <div class="brand-badge">
+          <span class="letter-g">G</span><span class="letter-x">⚡</span>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            <span class="human-txt">AI</span>
+            <span class="vs-txt">vs</span>
+            <span class="ai-txt">HUMAN</span>
+          </div>
+          <span class="brand-sub">GWiCS @ NJIT Flagship</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-menu">
+          <li><a href="#about-event" class="nav-link">The Event</a></li>
+          <li><a href="#rounds" class="nav-link">4 Rounds</a></li>
+          <li><a href="#arena" class="nav-link">🎮 Live Arena</a></li>
+          <li><a href="#debrief" class="nav-link">Spotting AI</a></li>
+          <li><a href="#schedule" class="nav-link">Schedule</a></li>
+          <li><a href="#gwics" class="nav-link">About GWiCS</a></li>
+        </ul>
+      </nav>
+
+      <!-- Action Controls & Palette Picker -->
+      <div class="header-actions">
+        <!-- Interactive 3rd Color Accent Switcher -->
+        <div class="palette-picker" title="Switch 3rd Accent Color (Current: Cyan, Violet, Emerald, or Coral)">
+          <span class="palette-label">Accent</span>
+          <div class="palette-dots">
+            <button class="palette-dot active" data-pick="cyan" title="Cyber Cyan (Default)"></button>
+            <button class="palette-dot" data-pick="violet" title="Electric Violet"></button>
+            <button class="palette-dot" data-pick="emerald" title="Emerald Matrix"></button>
+            <button class="palette-dot" data-pick="coral" title="Neon Coral"></button>
+          </div>
+        </div>
+
+        <!-- Organizer Toolkit Trigger -->
+        <button class="btn btn-outline-charcoal btn-sm" data-open-organizer title="Download Kahoot & Answer Key">
+          📁 Organizer Pack
+        </button>
+
+        <!-- RSVP CTA -->
+        <button class="btn btn-primary-gold btn-sm" data-open-rsvp>
+          🎟️ Get Table Pass
+        </button>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button class="mobile-toggle" aria-label="Toggle navigation menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       HERO SECTION WITH COUNTDOWN & LIVE STATS
+       ======================================================================== -->
+  <section class="hero-section" id="about-event">
+    <div class="hero-glow-gold"></div>
+    <div class="hero-glow-ai"></div>
+    <div class="container hero-content">
+      <!-- Event Eyebrow Badge -->
+      <div class="event-badge">
+        <span class="pulse-dot"></span>
+        <span>GWiCS ANNUAL FLAGSHIP EVENT · CAMPUS CENTER BALLROOM</span>
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="hero-title">
+        Can You Tell The <span class="highlight-ai">Machine</span><br>
+        From The <span class="highlight-human">Mind?</span>
+      </h1>
+
+      <p class="hero-lead">
+        Join <strong>Graduate Women in Computing Sciences (GWiCS)</strong> for an electrifying evening of high-stakes deception and algorithmic detection. <strong>4 intense rounds</strong> of visual illusions, literary mimicry, voice cloning forensics, and a live prompt battle against large language models.
+      </p>
+
+      <!-- Live Event Countdown Clock -->
+      <div class="countdown-container" aria-label="Event Countdown">
+        <div class="countdown-label-block">
+          <div class="countdown-kicker">Kickoff Countdown</div>
+          <div class="countdown-event-name">Friday, Dec 5, 2026 · 6:00 PM EST</div>
+        </div>
+        <div class="countdown-timer">
+          <div class="time-unit">
+            <span class="time-num" id="timeDays">14</span>
+            <span class="time-label">Days</span>
+          </div>
+          <span class="time-sep">:</span>
+          <div class="time-unit">
+            <span class="time-num" id="timeHours">03</span>
+            <span class="time-label">Hours</span>
+          </div>
+          <span class="time-sep">:</span>
+          <div class="time-unit">
+            <span class="time-num" id="timeMins">45</span>
+            <span class="time-label">Mins</span>
+          </div>
+          <span class="time-sep">:</span>
+          <div class="time-unit">
+            <span class="time-num" id="timeSecs">20</span>
+            <span class="time-label">Secs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Call-To-Action Buttons -->
+      <div class="hero-cta-group">
+        <button class="btn btn-primary-gold btn-lg" data-open-rsvp>
+          🎟️ Register Table & Get VIP Pass
+        </button>
+        <a href="#arena" class="btn btn-accent-ai btn-lg">
+          🎮 Launch Playable Game Arena
+        </a>
+        <a href="#warmup" class="btn btn-outline-charcoal btn-lg">
+          ⚡ 60-Sec Turing Warmup ↓
+        </a>
+      </div>
+
+      <!-- Event Quick Specs Grid -->
+      <div class="hero-stats-grid">
+        <div class="stat-card">
+          <div class="stat-val">4</div>
+          <div class="stat-desc">Competitive Rounds</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val ai-color">25</div>
+          <div class="stat-desc">Turing Challenges</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val">1</div>
+          <div class="stat-desc">Live LLM Showdown</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val ai-color">FREE</div>
+          <div class="stat-desc">Pizza & Trophy Awards</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       60-SECOND TURING WARMUP (INTERACTIVE TEASER)
+       ======================================================================== -->
+  <section class="warmup-section" id="warmup">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Interactive Teaser</span>
+        <h2 class="section-title">The 60-Second Turing Warmup</h2>
+        <p class="section-desc">
+          Test your human intuition right now before entering the grand arena. Can you solve these 3 sample mysteries?
+        </p>
+      </div>
+
+      <div class="warmup-box">
+        <div class="warmup-header">
+          <span class="warmup-step-indicator" id="warmupStepIndicator">Warmup Challenge 1 of 3</span>
+          <span class="warmup-score-badge" id="warmupScoreBadge">Score: 0 pts</span>
+        </div>
+
+        <div class="warmup-card-body" id="warmupCardBody">
+          <!-- Populated by js/app.js -->
+        </div>
+
+        <div class="warmup-verdict" id="warmupVerdict"></div>
+
+        <div style="text-align:right; margin-top:16px;">
+          <button class="btn btn-primary-gold btn-sm" id="warmupNextBtn" style="display:none;">Next Question →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       THE 4 ROUNDS SHOWCASE
+       ======================================================================== -->
+  <section class="rounds-section" id="rounds">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag ai-tag">Competition Structure</span>
+        <h2 class="section-title">4 Rounds of High-Stakes Deduction</h2>
+        <p class="section-desc">
+          Tables of 4–6 students compete head-to-head. Each question, your table holds up an answer paddle. One team takes home the Grand Champion Trophy.
+        </p>
+      </div>
+
+      <div class="rounds-grid">
+        <!-- Round 1 -->
+        <article class="round-card">
+          <div class="round-header-row">
+            <span class="round-num-pill">Round 1</span>
+            <span class="round-count-tag">10 Image Challenges</span>
+          </div>
+          <h3 class="round-title">Real or AI?</h3>
+          <div class="round-sub">The Visual Turing Test</div>
+          <p class="round-desc">
+            Examine 10 photographs projected on the main hall screen. Look for warped anatomy, impossible reflections, garbled background typography, and melting architectural borders.
+          </p>
+          <div class="round-footer">
+            <span class="round-points">1 pt per correct vote</span>
+            <a href="#arena" class="round-play-link" onclick="window.PracticeArena?.switchRound(0)">Play Round 1 Demo →</a>
+          </div>
+        </article>
+
+        <!-- Round 2 -->
+        <article class="round-card">
+          <div class="round-header-row">
+            <span class="round-num-pill ai-badge">Round 2</span>
+            <span class="round-count-tag">10 Literary Pairs</span>
+          </div>
+          <h3 class="round-title">Who Wrote It?</h3>
+          <div class="round-sub">The Literary Duel</div>
+          <p class="round-desc">
+            Emily Dickinson, Shakespeare, Frost, Thoreau, and Whitman pitted against modern large language models. One passage is genuine human literature; the other is algorithmic mimicry.
+          </p>
+          <div class="round-footer">
+            <span class="round-points">1 pt per correct vote</span>
+            <a href="#arena" class="round-play-link" onclick="window.PracticeArena?.switchRound(1)">Play Round 2 Demo →</a>
+          </div>
+        </article>
+
+        <!-- Round 3 -->
+        <article class="round-card">
+          <div class="round-header-row">
+            <span class="round-num-pill">Round 3</span>
+            <span class="round-count-tag">5 Voice Clips</span>
+          </div>
+          <h3 class="round-title">Sound Check</h3>
+          <div class="round-sub">Voice Synthesis & Audio Forensics</div>
+          <p class="round-desc">
+            Listen twice to audio memos and voicemails over auditorium speakers. Can you detect synthetic neural pacing, missing breath intake, and sterile acoustic compression?
+          </p>
+          <div class="round-footer">
+            <span class="round-points">1 pt per correct vote</span>
+            <a href="#arena" class="round-play-link" onclick="window.PracticeArena?.switchRound(2)">Play Round 3 Demo →</a>
+          </div>
+        </article>
+
+        <!-- Round 4 -->
+        <article class="round-card">
+          <div class="round-header-row">
+            <span class="round-num-pill ai-badge">Round 4</span>
+            <span class="round-count-tag">Live Stage Battle</span>
+          </div>
+          <h3 class="round-title">The Live Showdown</h3>
+          <div class="round-sub">Humans vs LLM in Real Time</div>
+          <p class="round-desc">
+            Two student volunteers take the stage against generative AI under a 120-second countdown. Prompts range from campus shuttle sonnets to dorm room horror stories. Audience votes on wit and authenticity!
+          </p>
+          <div class="round-footer">
+            <span class="round-points">2 pts for crowd favorite</span>
+            <a href="#arena" class="round-play-link" onclick="window.PracticeArena?.switchRound(3)">Preview Duel Prompts →</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       INTERACTIVE GAME ARENA (SOLO PRACTICE & HOST PROJECTOR CONSOLE)
+       ======================================================================== -->
+  <section class="arena-section" id="arena">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Interactive Gaming Engine</span>
+        <h2 class="section-title">The Showdown Arena</h2>
+        <p class="section-desc">
+          Play independently in <strong>Solo Practice Mode</strong> or switch to <strong>Host Projector Stage Mode</strong> to run the entire event on an auditorium screen with live team scoring!
+        </p>
+      </div>
+
+      <div class="arena-wrapper">
+        <!-- Arena Control Top Bar -->
+        <div class="arena-topbar">
+          <!-- View Modes -->
+          <div class="arena-modes" role="tablist">
+            <button class="arena-mode-btn active" id="arenaModeSolo" role="tab">👤 Solo Practice Mode</button>
+            <button class="arena-mode-btn" id="arenaModeProjector" role="tab">📽️ Host Projector Stage</button>
+          </div>
+
+          <!-- Round Navigation Tabs -->
+          <div class="arena-rounds-nav">
+            <button class="arena-round-tab active" data-round="0">Round 1: Images</button>
+            <button class="arena-round-tab" data-round="1">Round 2: Literature</button>
+            <button class="arena-round-tab" data-round="2">Round 3: Audio</button>
+            <button class="arena-round-tab" data-round="3">Round 4: Showdown</button>
+          </div>
+        </div>
+
+        <div class="arena-container">
+          <!-- ================================================================
+               VIEW A: SOLO PRACTICE VIEW
+               ================================================================ -->
+          <div class="practice-view" id="soloPracticeWrapper">
+            <!-- Practice Header Bar -->
+            <div class="practice-header">
+              <div class="practice-round-info">
+                <span class="practice-round-pill" id="practiceRoundPill">Round 1 of 4</span>
+                <span class="practice-round-title" id="practiceRoundTitle">Real or AI?</span>
+              </div>
+              <div class="practice-score-stats">
+                <div class="practice-stat">Score: <b id="practiceScoreVal">0 XP</b></div>
+                <div class="practice-stat">Status: <b style="color:var(--color-success);">Ready</b></div>
+              </div>
+            </div>
+
+            <!-- Progress Indicator -->
+            <div class="practice-progress-bar">
+              <div class="practice-progress-fill" id="practiceProgressFill" style="width:10%;"></div>
+            </div>
+
+            <!-- Dynamic Practice Stage (Renders R1, R2, R3, R4) -->
+            <div class="practice-card-stage" id="practiceCardStage">
+              <!-- Dynamically rendered by js/arena.js -->
+            </div>
+          </div>
+
+          <!-- ================================================================
+               VIEW B: PROJECTOR STAGE VIEW (GAME CONSOLE 2.0 FOR EVENT HOST)
+               ================================================================ -->
+          <div class="projector-view" id="projectorViewWrapper" style="display:none;">
+            <!-- 16:9 Cinema Projector Screen -->
+            <div class="stage-cinema" id="projectorCinemaStage">
+              <div class="stage-slide-content" id="projectorSlideCanvas">
+                <!-- Dynamically rendered by js/arena.js ProjectorDeck -->
+              </div>
+            </div>
+
+            <!-- Host Control Strip (Under the Stage) -->
+            <div class="host-control-dock">
+              <div class="dock-row">
+                <button class="btn btn-outline-charcoal btn-sm" id="dockPrevBtn">← Back</button>
+                <button class="btn btn-primary-gold btn-sm" id="dockNextBtn">Next / Step →</button>
+                <button class="btn btn-accent-ai btn-sm" id="dockRevealBtn">Reveal Answer</button>
+                <button class="btn btn-accent-ai btn-sm" id="dockPlayAudioBtn" style="display:none;">▶ Play Audio</button>
+                
+                <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted); margin:0 8px;" id="dockSlidePos">
+                  1 / 37 · Welcome Title
+                </span>
+
+                <select class="form-control" id="dockJumpSelect" style="max-width:240px; padding:4px 8px; font-size:12px;" aria-label="Jump to Slide"></select>
+                <button class="btn btn-outline-charcoal btn-sm" id="dockFsBtn" style="margin-left:auto;">⛶ Fullscreen (F)</button>
+              </div>
+
+              <!-- Table scoring chips for live voting -->
+              <div class="dock-row" id="dockScoreChips">
+                <!-- Dynamically populated with Table 1 to 6 buttons -->
+              </div>
+
+              <div class="dock-hotkeys-note">
+                Hotkeys: <strong>Space / →</strong> (Next or Reveal), <strong>←</strong> (Back), <strong>R</strong> (Reveal), <strong>F</strong> (Fullscreen). Tap a table chip to award points.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       DEBRIEF: 5 WAYS TO SPOT AI IN THE WILD
+       ======================================================================== -->
+  <section class="debrief-section" id="debrief">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag ai-tag">Digital Literacy Keynote</span>
+        <h2 class="section-title">5 Ways to Spot AI in the Wild</h2>
+        <p class="section-desc">
+          Take home these essential forensic techniques developed by researchers and digital literacy advocates to analyze synthetic media.
+        </p>
+      </div>
+
+      <div class="debrief-cards">
+        <div class="debrief-card">
+          <div class="debrief-num">01</div>
+          <h3 class="debrief-title">Glyph & Typography Collapse</h3>
+          <p class="debrief-text">
+            Diffusion models understand semantic concepts better than symbolic orthography. Zoom into background posters, book spines, and street signs—AI renders melted, garbled pseudo-letters.
+          </p>
+        </div>
+
+        <div class="debrief-card">
+          <div class="debrief-num">02</div>
+          <h3 class="debrief-title">Biometric & Earring Asymmetry</h3>
+          <p class="debrief-text">
+            Examine earlobes, fingernail beds, teeth alignment, and jewelry. AI frequently generates mismatched earrings or fused digits where hands interact with objects.
+          </p>
+        </div>
+
+        <div class="debrief-card">
+          <div class="debrief-num">03</div>
+          <h3 class="debrief-title">Polished but Hollow Prose</h3>
+          <p class="debrief-text">
+            LLMs predict average, high-probability tokens. They lean heavily on stock metaphors (“beacon of hope”, “testament to”) and lack grounded, idiosyncratic specific nouns.
+          </p>
+        </div>
+
+        <div class="debrief-card">
+          <div class="debrief-num">04</div>
+          <h3 class="debrief-title">Acoustic Cadence & Breath Absence</h3>
+          <p class="debrief-text">
+            Authentic human speech contains micro-hesitations, glottal friction, and inhalation pauses. Cloned voices often produce unnatural metronomic cadence without room resonance.
+          </p>
+        </div>
+
+        <div class="debrief-card">
+          <div class="debrief-num">05</div>
+          <h3 class="debrief-title">Physical Optics & Shadow Invariance</h3>
+          <p class="debrief-text">
+            Look for physical contradictions: do shadow angles match light sources? Do reflections on wet pavement mirror true geometry? Real physics rarely lie.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       SCHEDULE & AGENDA
+       ======================================================================== -->
+  <section class="schedule-section" id="schedule">
+    <div class="container">
+      <div class="section-head">
+        <span class="section-tag">Event Timeline</span>
+        <h2 class="section-title">Evening Schedule & Logistics</h2>
+        <p class="section-desc">
+          Join us at the NJIT Campus Center Ballroom. Doors open at 5:45 PM for team check-in and complimentary pizza.
+        </p>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-time">5:45 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Doors Open, Check-in & Free Pizza</h3>
+            <p class="timeline-desc">Pick up your official VIP Table Pass and voting paddle kit. Enjoy hot pizza and networking with fellow graduate peers.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">6:15 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Welcome Remarks from GWiCS Executive Board</h3>
+            <p class="timeline-desc">Opening presidential address, competition rules orientation, and table team formation.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">6:30 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Round 1: Real or AI? (Images)</h3>
+            <p class="timeline-desc">10 high-resolution visual Turing tests on the auditorium big screen.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">7:00 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Round 2: Who Wrote It? (Literature)</h3>
+            <p class="timeline-desc">10 face-offs between historical masters and modern generative AI.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">7:30 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Round 3: Sound Check (Voice Synthesis)</h3>
+            <p class="timeline-desc">5 acoustic tests analyzing deepfake voice cloning and neural speech synthesis.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">7:55 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Round 4: The Live Prompt Showdown</h3>
+            <p class="timeline-desc">Live student champions duel LLMs on stage with audience favorite scoring.</p>
+          </div>
+        </div>
+
+        <div class="timeline-item">
+          <div class="timeline-time">8:15 PM</div>
+          <div class="timeline-bullet"></div>
+          <div class="timeline-content">
+            <h3 class="timeline-title">Bonus Round, Awards Ceremony & Debrief</h3>
+            <p class="timeline-desc">Awarding the GWiCS Grand Champion Trophy, swag bundles, and closing photos.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       ABOUT GWICS & VENUE LOCATION
+       ======================================================================== -->
+  <section class="gwics-section" id="gwics">
+    <div class="container gwics-layout">
+      <!-- GWiCS Overview -->
+      <div class="gwics-info">
+        <span class="section-tag">Host Organization</span>
+        <h3>Graduate Women in Computing Sciences</h3>
+        <p>
+          GWiCS is an inclusive, empowering student organization at the New Jersey Institute of Technology (NJIT). We are committed to supporting female and underrepresented graduate scholars in computer science, software engineering, AI research, and data science through technical workshops, industry mentorship, and academic excellence.
+        </p>
+
+        <div class="gwics-pillars">
+          <div class="pillar-box">
+            <b>Research Talks</b>
+            <span>Seminars & graduate thesis spotlights</span>
+          </div>
+          <div class="pillar-box">
+            <b>Industry Mentorship</b>
+            <span>Connections with women tech leaders</span>
+          </div>
+          <div class="pillar-box">
+            <b>Code Sprints</b>
+            <span>Hackathons & technical building</span>
+          </div>
+          <div class="pillar-box">
+            <b>Peer Community</b>
+            <span>Social mixers & supportive cohorts</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Venue & Location Details -->
+      <div class="venue-card">
+        <h4 class="venue-card-title">Venue & Logistics</h4>
+        
+        <div class="venue-detail-row">
+          <span class="venue-icon">📍</span>
+          <div>
+            <strong>Campus Center Ballroom</strong>
+            <p style="color:var(--text-muted); font-size:13px;">New Jersey Institute of Technology (NJIT)<br>150 Bleeker Street, Newark, NJ 07102</p>
+          </div>
+        </div>
+
+        <div class="venue-detail-row">
+          <span class="venue-icon">🚆</span>
+          <div>
+            <strong>Transit & Parking</strong>
+            <p style="color:var(--text-muted); font-size:13px;">Minutes from Newark Penn Station & Newark Broad St. Free campus parking validation available in Summit St Garage.</p>
+          </div>
+        </div>
+
+        <div class="venue-detail-row">
+          <span class="venue-icon">🍕</span>
+          <div>
+            <strong>Catering & Refreshments</strong>
+            <p style="color:var(--text-muted); font-size:13px;">Complimentary hot pizza (Veggie, Halal, Cheese, Pepperoni) + cold beverages provided for all registered attendees.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;">
+          <button class="btn btn-primary-gold" style="width:100%;" data-open-rsvp>
+            Reserve Your Seat Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       FOOTER
+       ======================================================================== -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand-title" style="margin-bottom:8px;">
+            <span class="human-txt">AI</span> <span class="vs-txt">vs</span> <span class="ai-txt">HUMAN</span>
+          </div>
+          <p class="footer-brand-desc">
+            Organized by Graduate Women in Computing Sciences (GWiCS) at NJIT. Inspiring future engineers and researchers through engaging technical events.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Event Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="#about-event">Overview</a></li>
+            <li><a href="#rounds">The 4 Rounds</a></li>
+            <li><a href="#arena">Interactive Arena</a></li>
+            <li><a href="#debrief">Spotting AI Guide</a></li>
+            <li><a href="#schedule">Agenda</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="footer-col-title">Resources & Connect</h4>
+          <ul class="footer-links">
+            <li><a href="#" data-open-organizer>Download Kahoot Pack</a></li>
+            <li><a href="#" data-open-organizer>Printable Table Paddles</a></li>
+            <li><a href="#" data-open-rsvp>VIP Table Registration</a></li>
+            <li><a href="https://www.njit.edu" target="_blank" rel="noopener">NJIT Highlander Hub</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>© 2026 Graduate Women in Computing Sciences (GWiCS). All rights reserved.</div>
+        <div style="font-family:var(--font-mono); font-size:12px;">Built for the GWiCS Collegiate Tech Showdown</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================
+       MODAL 1: RSVP & VIP TABLE PASS GENERATOR
+       ======================================================================== -->
+  <div class="modal-overlay" id="rsvpModal" role="dialog" aria-modal="true" aria-labelledby="rsvpModalTitle">
+    <div class="modal-content">
+      <button class="modal-close" id="closeRsvpModal" aria-label="Close modal">✕</button>
+      
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:4px;">
+        GWiCS Table Pass Registration
+      </div>
+      <h3 id="rsvpModalTitle" style="font-family:var(--font-display); font-size:22px; margin-bottom:12px;">
+        Claim Your Event VIP Pass
+      </h3>
+      <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
+        Register as an individual or bring a full table team of 4–6 friends. Your badge will be generated instantly.
+      </p>
+
+      <form id="rsvpForm">
+        <div class="form-group">
+          <label class="form-label" for="rsvpName">Your Full Name</label>
+          <input type="text" class="form-control" id="rsvpName" placeholder="e.g., Alex Mercer" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="rsvpEmail">University / College Email</label>
+          <input type="email" class="form-control" id="rsvpEmail" placeholder="e.g., am123@njit.edu" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="rsvpTeam">Table Team Name (Optional)</label>
+          <input type="text" class="form-control" id="rsvpTeam" placeholder="e.g., The Turing Enigmas">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="rsvpDietary">Pizza Preference</label>
+          <select class="form-control" id="rsvpDietary">
+            <option value="cheese">Classic Cheese</option>
+            <option value="pepperoni">Pepperoni</option>
+            <option value="veggie">Vegetarian Special</option>
+            <option value="halal">Halal Pepperoni</option>
+            <option value="gf">Gluten-Free Crust</option>
+          </select>
+        </div>
+
+        <!-- Live Generated Ticket Pass Preview -->
+        <div class="ticket-preview">
+          <div class="ticket-header">
+            <span class="ticket-pass-type">VIP TABLE ADMISSION · GWiCS 2026</span>
+            <span style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400);">TABLE #04</span>
+          </div>
+          <div class="ticket-body">
+            <div>
+              <div class="ticket-attendee-name" id="passAttendeeName">Alex Mercer</div>
+              <div class="ticket-attendee-team" id="passAttendeeTeam">Table Team: The Turing Enigmas</div>
+              <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); margin-top:8px;">
+                Campus Center Ballroom · 5:45 PM Doors Open
+              </div>
+            </div>
+            <div class="ticket-qr-code">
+              <canvas id="ticketQrCanvas" width="64" height="64"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; display:flex; gap:12px;">
+          <button type="submit" class="btn btn-primary-gold" style="flex:1;">
+            Confirm & Save Pass
+          </button>
+          <button type="button" class="btn btn-outline-charcoal" onclick="window.print()">
+            🖨️ Print Pass
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: ORGANIZER TOOLKIT & DOWNLOADS
+       ======================================================================== -->
+  <div class="modal-overlay" id="organizerModal" role="dialog" aria-modal="true" aria-labelledby="orgModalTitle">
+    <div class="modal-content">
+      <button class="modal-close" id="closeOrganizerModal" aria-label="Close modal">✕</button>
+
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--accent-3); text-transform:uppercase; letter-spacing:0.12em; margin-bottom:4px;">
+        GWiCS Moderator Toolkit
+      </div>
+      <h3 id="orgModalTitle" style="font-family:var(--font-display); font-size:22px; margin-bottom:12px;">
+        Event Resources & Spreadsheets
+      </h3>
+      <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
+        Download official Kahoot imports, the moderator answer key, or generate printable voting paddles for every table.
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="pillar-box" style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <b style="color:var(--gold-400);">Kahoot Spreadsheet Import</b>
+            <span>Pre-formatted .xlsx with all 25 questions, timers, and answer indices.</span>
+          </div>
+          <a href="assets/docs/ai-vs-human-kahoot-import.xlsx" download class="btn btn-primary-gold btn-sm">
+            Download .xlsx
+          </a>
+        </div>
+
+        <div class="pillar-box" style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <b style="color:var(--accent-3);">Moderator Answer Key</b>
+            <span>Full cheat sheet with tell scripts, AI prompts, and literary background.</span>
+          </div>
+          <a href="assets/docs/ai-vs-human-answer-key.xlsx" download class="btn btn-accent-ai btn-sm">
+            Download Key
+          </a>
+        </div>
+
+        <div class="pillar-box" style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <b style="color:var(--text-main);">Printable Table Voting Cards</b>
+            <span>Printable 8.5x11 sheets with [HUMAN], [AI], [A], and [B] paddles.</span>
+          </div>
+          <button class="btn btn-outline-charcoal btn-sm" onclick="window.print()">
+            🖨️ Print Cards
+          </button>
+        </div>
+
+        <div class="pillar-box" style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <b style="color:var(--gold-500);">Live Projector Stage Console</b>
+            <span>Open the 16:9 fullscreen host stage with table scorekeeper.</span>
+          </div>
+          <button class="btn btn-primary-gold btn-sm" onclick="document.getElementById('arenaModeProjector').click(); document.getElementById('arena').scrollIntoView(); document.getElementById('closeOrganizerModal').click();">
+            Launch Stage
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="js/data.js"></script>
+  <script src="js/arena.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

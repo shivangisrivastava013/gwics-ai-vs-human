@@ -1,0 +1,732 @@
+/* ==========================================================================
+   GWiCS AI vs Human - Interactive Arena & Projector Stage Styles
+   ========================================================================== */
+
+/* Arena Container */
+.arena-container {
+  padding: 24px;
+  background: var(--charcoal-900);
+}
+
+/* --------------------------------------------------------------------------
+   SOLO PRACTICE VIEW
+   -------------------------------------------------------------------------- */
+.practice-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.practice-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--charcoal-850);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.practice-round-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.practice-round-pill {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold-400);
+  background: var(--charcoal-800);
+  border: 1px solid var(--charcoal-700);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.practice-round-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.practice-score-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.practice-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.practice-stat b {
+  color: var(--text-main);
+}
+
+.practice-progress-bar {
+  height: 4px;
+  background: var(--charcoal-750);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: -12px;
+}
+
+.practice-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-500), var(--accent-3));
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
+/* Practice Card Canvas */
+.practice-card-stage {
+  background: var(--charcoal-850);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: var(--shadow-md);
+}
+
+/* Stage: Image Question (Round 1) */
+.practice-image-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.practice-img-frame {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--charcoal-700);
+  background: var(--charcoal-950);
+  aspect-ratio: 4/3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.practice-img-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.practice-img-frame:hover img {
+  transform: scale(1.03);
+}
+
+.practice-img-zoom-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(13, 17, 23, 0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--charcoal-600);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.practice-content-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.practice-q-num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+
+.practice-q-text {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.practice-hint-box {
+  background: var(--charcoal-800);
+  border-left: 3px solid var(--gold-500);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Voting Buttons for Practice */
+.practice-vote-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.practice-btn-vote {
+  padding: 16px 20px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 2px solid var(--charcoal-700);
+  background: var(--charcoal-800);
+  transition: all var(--transition-fast);
+}
+
+.practice-btn-vote small {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.practice-btn-vote.btn-human:hover:not(:disabled) {
+  border-color: var(--gold-500);
+  background: var(--gold-subtle);
+  color: var(--gold-400);
+  box-shadow: 0 0 16px var(--gold-glow);
+}
+
+.practice-btn-vote.btn-ai:hover:not(:disabled) {
+  border-color: var(--accent-3);
+  background: var(--accent-3-subtle);
+  color: var(--accent-3);
+  box-shadow: 0 0 16px var(--accent-3-glow);
+}
+
+.practice-btn-vote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Practice Reveal Result Banner */
+.practice-reveal-card {
+  margin-top: 16px;
+  padding: 18px 22px;
+  border-radius: var(--radius-md);
+  background: var(--charcoal-900);
+  border: 1px solid var(--charcoal-700);
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.practice-reveal-card.revealed {
+  display: block;
+}
+
+.practice-reveal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.practice-verdict-pill {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+}
+
+.practice-verdict-pill.is-human {
+  background: var(--gold-500);
+  color: var(--charcoal-950);
+}
+
+.practice-verdict-pill.is-ai {
+  background: var(--accent-3);
+  color: var(--charcoal-950);
+}
+
+.practice-tell-text {
+  font-size: 14px;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+.practice-tell-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Next / Navigation Row */
+.practice-nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--charcoal-750);
+}
+
+/* Stage: Text Comparison (Round 2) */
+.practice-text-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 16px 0;
+}
+
+.practice-poem-card {
+  background: var(--charcoal-800);
+  border: 2px solid var(--charcoal-700);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.practice-poem-card:hover {
+  border-color: var(--charcoal-600);
+  background: var(--charcoal-750);
+}
+
+.practice-poem-card.selected-vote {
+  border-color: var(--accent-3);
+  background: var(--accent-3-subtle);
+}
+
+.practice-poem-card.revealed-ai {
+  border-color: var(--accent-3);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.practice-poem-card.revealed-human {
+  border-color: var(--gold-500);
+  background: rgba(245, 184, 66, 0.08);
+}
+
+.poem-tag-letter {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.poem-body-text {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre-line;
+  color: var(--text-main);
+  flex: 1;
+}
+
+.poem-badge-reveal {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+
+/* Stage: Audio Player (Round 3) */
+.practice-audio-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  gap: 24px;
+  padding: 30px 0;
+}
+
+.audio-orb-player {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--charcoal-800);
+  border: 3px solid var(--accent-3);
+  display: grid;
+  place-items: center;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 0 24px var(--accent-3-subtle);
+  transition: all var(--transition-base);
+}
+
+.audio-orb-player:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 35px var(--accent-3-glow);
+}
+
+.audio-orb-player.playing {
+  animation: orb-pulse 1.4s infinite ease-in-out;
+  border-color: var(--gold-500);
+}
+
+@keyframes orb-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-3-glow); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 20px rgba(0, 229, 255, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
+}
+
+.audio-waveform-bars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+}
+
+.wave-bar {
+  width: 4px;
+  height: 8px;
+  background: var(--accent-3);
+  border-radius: var(--radius-pill);
+  transition: height 0.2s ease;
+}
+
+.audio-orb-player.playing .wave-bar {
+  animation: wave-bounce 1s infinite alternate ease-in-out;
+}
+
+.audio-orb-player.playing .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+.audio-orb-player.playing .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+.audio-orb-player.playing .wave-bar:nth-child(4) { animation-delay: 0.1s; }
+.audio-orb-player.playing .wave-bar:nth-child(5) { animation-delay: 0.3s; }
+
+@keyframes wave-bounce {
+  0% { height: 8px; }
+  100% { height: 32px; }
+}
+
+/* --------------------------------------------------------------------------
+   PROJECTOR STAGE VIEW (GAME CONSOLE 2.0 FOR EVENT HOST)
+   -------------------------------------------------------------------------- */
+.projector-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 16:9 Cinema Projector Stage */
+.stage-cinema {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: radial-gradient(120% 90% at 0% 0%, #151B2B 0%, var(--charcoal-950) 65%);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage-cinema:fullscreen {
+  border: 0;
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  aspect-ratio: auto;
+  background: var(--charcoal-950);
+}
+
+.stage-cinema:fullscreen .stage-slide-content {
+  width: min(100vw, 177.78vh);
+  height: min(100vh, 56.25vw);
+}
+
+.stage-slide-content {
+  position: absolute;
+  inset: 0;
+  padding: 4.5cqw 5.5cqw;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Slide Typography scaled with container query units (cqw) */
+.slide-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 1.6cqw;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+}
+
+.slide-main-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 6.2cqw;
+  line-height: 1.05;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.slide-sub-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 3.2cqw;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.slide-lede {
+  font-size: 2cqw;
+  color: var(--text-muted);
+  max-width: 65cqw;
+  line-height: 1.5;
+}
+
+/* Stage Visual Grid (Round 1) */
+.stage-media-box {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1.2cqw;
+  background: var(--charcoal-850);
+  border: 1px solid var(--charcoal-700);
+  overflow: hidden;
+  position: relative;
+  margin: 1.5cqw 0;
+}
+
+.stage-media-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Stage Text Pair (Round 2) */
+.stage-text-duo {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2cqw;
+  margin: 1.5cqw 0;
+}
+
+.stage-poem-card {
+  background: var(--charcoal-850);
+  border: 1px solid var(--charcoal-700);
+  border-radius: 1.2cqw;
+  padding: 2.2cqw;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.stage-poem-card .card-tag {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.8cqw;
+  color: var(--text-dim);
+}
+
+.stage-poem-card .card-txt {
+  font-family: var(--font-serif);
+  font-size: 1.9cqw;
+  line-height: 1.45;
+  white-space: pre-line;
+  color: var(--text-main);
+  flex: 1;
+}
+
+.stage-poem-card.is-ai {
+  border-color: var(--accent-3);
+  background: rgba(0, 229, 255, 0.1);
+}
+
+.stage-poem-card.is-human {
+  border-color: var(--gold-500);
+  background: rgba(245, 184, 66, 0.1);
+}
+
+/* Stage Verdict Bar */
+.stage-verdict-bar {
+  display: flex;
+  align-items: center;
+  gap: 2cqw;
+  background: var(--charcoal-850);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius-pill);
+  padding: 0.8cqw 2cqw;
+}
+
+.stage-pill-badge {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.8cqw;
+  padding: 0.4cqw 1.8cqw;
+  border-radius: var(--radius-pill);
+  color: var(--charcoal-950);
+}
+
+.stage-pill-badge.ai {
+  background: var(--accent-3);
+}
+
+.stage-pill-badge.human {
+  background: var(--gold-500);
+}
+
+.stage-tell-block {
+  font-size: 1.8cqw;
+  color: var(--text-main);
+  max-width: 65cqw;
+}
+
+/* Stage Leaderboard */
+.stage-leaderboard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.2cqw;
+}
+
+.stage-board-row {
+  display: grid;
+  grid-template-columns: 4cqw 20cqw 1fr 6cqw;
+  align-items: center;
+  gap: 1.6cqw;
+  font-size: 2.2cqw;
+}
+
+.stage-board-rank {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.stage-board-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stage-board-bar {
+  height: 2.4cqw;
+  border-radius: var(--radius-pill);
+  background: var(--charcoal-800);
+  overflow: hidden;
+}
+
+.stage-board-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-500), var(--accent-3));
+  border-radius: var(--radius-pill);
+  transition: width 0.6s ease;
+}
+
+.stage-board-score {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold-400);
+}
+
+/* Host Control Dock */
+.host-control-dock {
+  background: var(--charcoal-850);
+  border: 1px solid var(--charcoal-700);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dock-row-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.table-score-chip {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--charcoal-900);
+  border: 1px solid var(--charcoal-700);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.table-score-chip[aria-pressed="true"] {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #000000;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+.dock-hotkeys-note {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+@media (max-width: 900px) {
+  .practice-image-layout {
+    grid-template-columns: 1fr;
+  }
+  .practice-text-duo {
+    grid-template-columns: 1fr;
+  }
+}
