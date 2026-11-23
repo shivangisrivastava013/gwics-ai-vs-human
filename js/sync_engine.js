@@ -434,7 +434,7 @@
         cardImage: fullItem.cardImage || null,
         passageA: fullItem.passageA || null,
         passageB: fullItem.passageB || null,
-        audioUrl: fullItem.audioUrl || null,
+        audioUrl: fullItem.type === "audio" ? String(fullItem.audioUrl || fullItem.media || "").replace(/\\/g, "/") : null,
         transcript: fullItem.transcript || null,
         audioAccessibilityNotes: fullItem.audioAccessibilityNotes || null,
         contenders: fullItem.contenders || null,
