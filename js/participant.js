@@ -41,8 +41,8 @@
     setupPracticeSandbox();
     setupLeaveTeam();
 
-    // Check for existing captain session in localStorage
-    const saved = localStorage.getItem(SESSION_KEY);
+    // Check for existing player session in localStorage
+    const saved = localStorage.getItem(SESSION_KEY) || localStorage.getItem("botornot_player_session");
     if (saved) {
       try {
         const session = JSON.parse(saved);
@@ -131,12 +131,14 @@
     myTeam.id = teamId;
     myTeam.name = teamName;
 
-    // Save session so page refresh preserves team & submissions
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
+    // Save session so page refresh preserves player & submissions
+    const sessionData = JSON.stringify({
       roomCode: roomCode,
       teamName: teamName,
       teamId: teamId
-    }));
+    });
+    localStorage.setItem(SESSION_KEY, sessionData);
+    localStorage.setItem("botornot_player_session", sessionData);
 
     Engine.initAsParticipant(roomCode, teamName, teamId);
 
@@ -145,7 +147,7 @@
     document.getElementById("viewPractice").style.display = "none";
     document.getElementById("viewInGame").style.display = "flex";
     document.getElementById("headerXpPill").style.display = "flex";
-    document.getElementById("gameTeamNameLabel").textContent = `Team: ${teamName}`;
+    document.getElementById("gameTeamNameLabel").textContent = `Player: ${teamName}`;
   }
 
   function setupLeaveTeam() {
@@ -160,6 +162,7 @@
     if (btnConfirm) {
       btnConfirm.onclick = () => {
         localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem("botornot_player_session");
         myTeam = { id: null, name: "", xp: 100, answers: {}, unlockedHints: {}, history: [] };
         modal.classList.remove("open");
         document.getElementById("viewInGame").style.display = "none";
@@ -201,6 +204,41 @@
       cardLobby.style.display = "block";
       cardActive.style.display = "none";
       if (roundTag) roundTag.textContent = "Lobby";
+      cardLobby.innerHTML = `
+        <div style="font-size:40px; margin-bottom:12px;">🎮</div>
+        <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game!</h2>
+        <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 16px;">
+          Starting balance: <strong>100 XP</strong>. Look at the main screen—your name will appear on the audience display.
+        </p>
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:6px 14px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700);">
+          Watching for the host to launch the first question...
+        </div>
+      `;
+      return;
+    }
+
+    if (state.status === "RESULTS") {
+      cardLobby.style.display = "block";
+      cardActive.style.display = "none";
+      if (roundTag) roundTag.textContent = "Final Standings";
+
+      const leaderboard = state.leaderboard || [];
+      const myRankIdx = leaderboard.findIndex(p => p.teamId === myTeam.id);
+      const myRank = myRankIdx >= 0 ? myRankIdx + 1 : "-";
+      const totalPlayers = leaderboard.length;
+
+      cardLobby.innerHTML = `
+        <div style="font-size:48px; margin-bottom:12px;">🏆</div>
+        <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:6px; color:var(--gold-400);">Game Completed!</h2>
+        <div style="font-size:16px; font-weight:700; margin-bottom:16px;">
+          You placed <span style="color:var(--gold-400); font-size:22px; font-family:var(--font-mono);">#${myRank}</span> of ${totalPlayers} players
+        </div>
+        <div style="background:var(--charcoal-900); padding:16px; border-radius:var(--radius-md); max-width:320px; margin:0 auto 16px; border:1px solid var(--charcoal-700);">
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">Your Final Score</div>
+          <div style="font-family:var(--font-mono); font-size:28px; font-weight:800; color:var(--gold-400);">${myTeam.xp} XP</div>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted);">See the audience projector screen for the official podium!</p>
+      `;
       return;
     }
 
@@ -265,13 +303,20 @@
       document.getElementById("txtAudioA11y").textContent = q.audioAccessibilityNotes || "";
 
       const btnPlay = document.getElementById("btnPlayParticipantAudio");
+      btnPlay.textContent = "🔊 Listen on Headphones (Room audio playing)";
       btnPlay.onclick = () => {
-        if (currentAudio) currentAudio.pause();
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+          btnPlay.textContent = "🔊 Listen on Headphones";
+          return;
+        }
         currentAudio = new Audio(q.audioUrl);
-        btnPlay.textContent = "🔊 Playing...";
-        currentAudio.onended = () => { btnPlay.textContent = "▶ Play Audio Clip"; };
-        currentAudio.onerror = () => { btnPlay.textContent = "⚠️ Audio unavailable (see cues below)"; };
-        currentAudio.play().catch(() => { btnPlay.textContent = "▶ Tap again to play"; });
+        currentAudio.preload = "auto";
+        btnPlay.textContent = "🔊 Playing in Headphones...";
+        currentAudio.onended = () => { btnPlay.textContent = "🔊 Listen on Headphones"; currentAudio = null; };
+        currentAudio.onerror = () => { btnPlay.textContent = "⚠️ Audio unavailable (see text above)"; };
+        currentAudio.play().catch(() => { btnPlay.textContent = "▶ Tap to listen on headphones"; });
       };
     } else if (q.type === "showdown") {
       if (showdownFrame) {
@@ -327,7 +372,7 @@
     if (isSubmitted) {
       submitBar.style.display = "none";
       submittedBanner.style.display = "flex";
-      submittedBannerText.textContent = `Answer (${teamSub.choice}) submitted. Waiting for the host.`;
+      submittedBannerText.textContent = `✓ Answer (${teamSub.choice}) locked in. Waiting for the host reveal...`;
     } else if (isVoided) {
       submitBar.style.display = "none";
       submittedBanner.style.display = "none";
@@ -376,12 +421,16 @@
       const isCorrect = teamSub && teamSub.choice === state.releasedAnswer;
       resultBox.className = `released-result-box ${isCorrect ? 'correct' : 'incorrect'}`;
 
+      const leaderboard = state.leaderboard || [];
+      const myRankIdx = leaderboard.findIndex(p => p.teamId === myTeam.id);
+      const myRankStr = myRankIdx >= 0 ? ` · Current Rank #${myRankIdx + 1}` : "";
+
       const isShowdown = q.type === "showdown";
       document.getElementById("releasedVerdictBadge").textContent = isShowdown
         ? `Official Answer: Contender ${state.releasedAnswer} was AI`
         : `Official Answer: ${state.releasedAnswer}`;
       document.getElementById("releasedPointsDelta").textContent = 
-        teamSub ? (isCorrect ? "+100 XP (Correct!)" : "0 XP (Incorrect)") : "No Answer Submitted";
+        teamSub ? (isCorrect ? `+100 XP (Correct!${myRankStr})` : `0 XP (Incorrect${myRankStr})`) : `No Answer Submitted${myRankStr}`;
       document.getElementById("releasedPointsDelta").style.color = isCorrect ? "var(--color-success)" : "var(--color-danger)";
       document.getElementById("releasedTellText").innerHTML = `
         <strong>The Tell:</strong> ${escapeHtml(state.releasedTell || "Verified by host.")}

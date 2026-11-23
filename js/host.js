@@ -16,12 +16,22 @@
 
   function init() {
     setupAuth();
+    setupPresentButton();
     setupRoundTabs();
     setupActionButtons();
     setupScoreModal();
     setupAudioCheck();
     setupExportCsv();
     setupShowdownEditor();
+  }
+
+  function setupPresentButton() {
+    const btn = document.getElementById("btnHostPresent");
+    if (!btn) return;
+    btn.onclick = () => {
+      const room = (document.getElementById("hostRoomInput")?.value || Engine.roomCode || "BOTORNOT").trim().toUpperCase();
+      window.open(`projector.html?room=${encodeURIComponent(room)}`, "_blank");
+    };
   }
 
   /* --------------------------------------------------------------------------
@@ -40,7 +50,7 @@
     if (savedAuth === "true" && cachedPack) {
       try {
         loadedPack = JSON.parse(cachedPack);
-        preparePack(loadedPack);
+        preparePack(loadedPack, savedRoom);
         gate.style.display = "none";
         dash.style.display = "grid";
         startHost(loadedPack, savedRoom);
@@ -78,7 +88,7 @@
             return;
           }
 
-          preparePack(pack);
+          preparePack(pack, room);
           loadedPack = pack;
 
           // Store in session storage so refresh works without re-uploading
@@ -103,15 +113,37 @@
     });
   }
 
-  // Prepares round 4 items with neutral options and randomized AI contender assignment
-  function preparePack(pack) {
+  // Prepares pack: shuffles question records once per session and randomizes AI contender in Showdown
+  function preparePack(pack, roomCode) {
+    const sessionKey = "botornot_prepared_pack_" + (roomCode || "BOTORNOT");
+    const cached = sessionStorage.getItem(sessionKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && Array.isArray(parsed.rounds)) {
+          Object.assign(pack, parsed);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    // 1. Shuffle whole question records within rounds 1, 2, 3 (preserving all question properties)
+    for (const round of pack.rounds) {
+      if (round.roundNum === 4 || !Array.isArray(round.items)) continue;
+      for (let i = round.items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [round.items[i], round.items[j]] = [round.items[j], round.items[i]];
+      }
+    }
+
+    // 2. Prepare Round 4 Showdown items with randomized AI slot across duels
     const r4 = pack.rounds.find(r => r.roundNum === 4);
     if (r4 && (!r4.items || !r4.items.length) && r4.prompts) {
       const slots = ["A", "B", "C"];
 
       r4.items = r4.prompts.map((p, i) => {
-        // Rotate and randomize AI slot across duels (e.g. A, B, or C) so it is never predictable!
-        const aiSlot = slots[i % slots.length];
+        // Uniformly pick randomized AI slot (A, B, or C)
+        const aiSlot = slots[Math.floor(Math.random() * slots.length)];
         const humanSlots = slots.filter(s => s !== aiSlot);
 
         return {
@@ -127,7 +159,7 @@
             B: "Waiting for Contender B response text...",
             C: "Waiting for Contender C response text..."
           },
-          // Strictly neutral labels with ZERO giveaway!
+          // Strictly neutral labels with ZERO giveaway
           options: [
             { id: "A", label: "Contender A is AI" },
             { id: "B", label: "Contender B is AI" },
@@ -155,6 +187,11 @@
         });
       }
     }
+
+    // Cache prepared pack for session stability across host page refreshes
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify(pack));
+    } catch (e) {}
   }
 
   function startHost(pack, roomCode) {
@@ -282,6 +319,53 @@
       showdownEditor.style.display = "none";
     }
 
+    // Audio Preview Handling for Host
+    const audioCard = document.getElementById("hostAudioCard");
+    const audioEl = document.getElementById("hostAudioEl");
+    const audioStatus = document.getElementById("hostAudioStatus");
+
+    if (it.type === "audio") {
+      if (audioCard) audioCard.style.display = "block";
+      if (audioEl) {
+        audioEl.pause();
+        const url = (it.audioUrl || it.media || "").replace(/\\/g, "/");
+        audioEl.src = url;
+        audioEl.load();
+        if (audioStatus) audioStatus.textContent = "Audio ready for host preview / room playback";
+
+        audioEl.onplay = () => { if (audioStatus) audioStatus.textContent = "🔊 Playing audio..."; };
+        audioEl.onpause = () => { if (audioStatus) audioStatus.textContent = "⏸ Paused"; };
+        audioEl.onended = () => { if (audioStatus) audioStatus.textContent = "✓ Finished playing"; };
+        audioEl.onerror = () => { if (audioStatus) audioStatus.textContent = "⚠️ Could not load audio. Check file path."; };
+
+        const btnPlay = document.getElementById("btnHostPlayAudio");
+        if (btnPlay) {
+          btnPlay.onclick = () => {
+            if (audioEl.paused) {
+              audioEl.play().catch(e => { if (audioStatus) audioStatus.textContent = "Play notice: " + e.message; });
+            } else {
+              audioEl.pause();
+            }
+          };
+        }
+
+        const btnReplay = document.getElementById("btnHostReplayAudio");
+        if (btnReplay) {
+          btnReplay.onclick = () => {
+            audioEl.currentTime = 0;
+            audioEl.play().catch(e => { if (audioStatus) audioStatus.textContent = "Play notice: " + e.message; });
+          };
+        }
+      }
+    } else {
+      if (audioCard) audioCard.style.display = "none";
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.removeAttribute("src");
+        audioEl.load();
+      }
+    }
+
     document.getElementById("hostSubmissionStatusText").textContent = "Selected. Click 'Launch Question' to broadcast.";
   }
 
@@ -393,7 +477,7 @@
     };
 
     btnVoid.onclick = () => {
-      if (confirm("Void this question? Submissions will be locked, and any team that purchased a hint for this question will receive a full 25 XP refund.")) {
+      if (confirm("Void this question? Submissions will be locked, and any player who purchased a hint for this question will receive a full 25 XP refund.")) {
         Engine.voidQuestion("Question voided by host");
         document.getElementById("hostSubmissionStatusText").textContent = "Question marked VOID. All hints refunded.";
       }
@@ -402,7 +486,7 @@
     document.getElementById("btnRefreshTeams").onclick = renderTeams;
 
     document.getElementById("btnResetAll").onclick = () => {
-      if (confirm("Reset the entire game session? This clears all team scores and submissions.")) {
+      if (confirm("Reset the entire game session? This clears all player scores and submissions.")) {
         localStorage.clear();
         sessionStorage.clear();
         location.reload();
@@ -426,7 +510,7 @@
 
     const total = state.totalTeams || 0;
     const sub = state.submittedCount || 0;
-    document.getElementById("hostSubmissionsCount").textContent = `${sub} / ${total} Teams`;
+    document.getElementById("hostSubmissionsCount").textContent = `${sub} / ${total} Players`;
     document.getElementById("hostTeamsCountLabel").textContent = total;
 
     renderTeams();
@@ -438,7 +522,7 @@
 
     const teams = Object.values(Engine.teams || {}).sort((a, b) => b.xp - a.xp);
     if (!teams.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding:20px;">No teams joined yet. Waiting for table captains...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding:20px;">No players joined yet. Waiting for attendees to scan and join...</td></tr>`;
       return;
     }
 
@@ -560,11 +644,11 @@
     btn.onclick = () => {
       const teams = Object.values(Engine.teams || {});
       if (!teams.length) {
-        alert("No teams to export.");
+        alert("No players to export.");
         return;
       }
 
-      let csv = "Rank,Team Name,Final XP Balance,Questions Answered,History Log\n";
+      let csv = "Rank,Display Name,Final XP Balance,Questions Answered,History Log\n";
       teams.sort((a, b) => b.xp - a.xp).forEach((t, idx) => {
         const histLog = (t.history || []).map(h => `${h.desc} (${h.delta >= 0 ? '+' : ''}${h.delta})`).join(" | ");
         csv += `${idx + 1},"${t.name.replace(/"/g, '""')}",${t.xp},${Object.keys(t.answers || {}).length},"${histLog.replace(/"/g, '""')}"\n`;

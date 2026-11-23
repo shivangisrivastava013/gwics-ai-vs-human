@@ -585,6 +585,21 @@
       z-index: 1000;
     }
     .fs-toggle-btn:hover { opacity: 1; }
+
+    /* GWiCS Stage Brand Logo */
+    .stage-brand-logo {
+      height: clamp(34px, 4.5vh, 56px);
+      width: auto;
+      aspect-ratio: 1/1;
+      object-fit: contain;
+      background: #FFFFFF;
+      border-radius: 50%;
+      padding: 3px;
+      margin-right: 12px;
+      border: 1px solid var(--gold-400);
+      box-shadow: 0 0 10px rgba(229, 184, 66, 0.3);
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -599,6 +614,7 @@
     <!-- Row 1: Top Stage Header (auto) -->
     <header class="stage-header">
       <div class="stage-brand">
+        <img src="assets/media/gwics_logo.png" alt="GWiCS" class="stage-brand-logo">
         <span class="gold">BOT</span>&nbsp;OR&nbsp;<span class="cyan">NOT?</span>
         <span class="stage-brand-sub">GWiCS Showdown</span>
       </div>
@@ -625,7 +641,7 @@
 
         <div class="lobby-join-instructions">
           <div class="lobby-instructions-tag">
-            Join on your table captain's phone
+            Scan, join, and play on your own phone
           </div>
           <div class="lobby-url-text">
             shivangisrivastava013.github.io/gwics-ai-vs-human
@@ -636,7 +652,7 @@
         </div>
 
         <div class="lobby-teams-counter" id="stageTeamsCount">
-          0 Teams Ready at Tables
+          0 Players Ready
         </div>
       </div>
 
@@ -666,6 +682,8 @@
 
         <!-- Media Stage 3: Audio Voice Check -->
         <div class="projector-audio-view" id="stageAudioContainer" style="display:none;">
+          <audio id="stageAudioPlayer" controls preload="metadata" aria-label="Room audio challenge" style="width:min(600px, 85%); margin-bottom:8px;"></audio>
+          <div id="stageAudioStatus" style="font-family:var(--font-mono); font-size:clamp(12px, 1.4vh, 16px); color:var(--gold-400); margin-bottom:8px;"></div>
           <div class="audio-big-orb" id="stageAudioOrb">
             <span>Clip</span>
           </div>

@@ -98,7 +98,17 @@
     const sub = state.submittedCount || 0;
     const pct = total > 0 ? Math.round((sub / total) * 100) : 0;
     if (fill) fill.style.width = `${pct}%`;
-    if (countText) countText.textContent = `${sub} / ${total} Teams`;
+    if (countText) countText.textContent = `${sub} / ${total} Players`;
+
+    const audioPlayer = document.getElementById("stageAudioPlayer");
+    const audioStatus = document.getElementById("stageAudioStatus");
+
+    // Pause audio when returning to lobby or showing leaderboard
+    if (["LOBBY", "RESULTS", "VOIDED", "REVEALED"].includes(state.status)) {
+      if (audioPlayer && !audioPlayer.paused) {
+        audioPlayer.pause();
+      }
+    }
 
     // 1. Lobby View
     if (state.status === "LOBBY") {
@@ -107,7 +117,7 @@
       revealOverlay.style.display = "none";
       voidOverlay.style.display = "none";
       leaderboardView.style.display = "none";
-      document.getElementById("stageTeamsCount").textContent = `${total} Teams Ready at Tables`;
+      document.getElementById("stageTeamsCount").textContent = `${total} Players Ready`;
       document.getElementById("stageRoomCode").textContent = `ROOM: ${state.roomCode || 'BOTORNOT'}`;
       if (roundLabel) roundLabel.textContent = "Pre-Game Lobby";
       return;
@@ -154,19 +164,42 @@
     if (q.type === "image" && q.media) {
       imgContainer.style.display = "flex";
       document.getElementById("stageImgEl").src = q.media;
+      if (audioPlayer) { audioPlayer.pause(); audioPlayer.dataset.qid = ""; }
     } else if (q.type === "text") {
       textContainer.style.display = "grid";
       document.getElementById("stagePassageA").textContent = q.passageA || "";
       document.getElementById("stagePassageB").textContent = q.passageB || "";
+      if (audioPlayer) { audioPlayer.pause(); audioPlayer.dataset.qid = ""; }
     } else if (q.type === "audio") {
       audioContainer.style.display = "flex";
       document.getElementById("stageAudioScript").textContent = q.transcript || "";
+
+      // Only load audio when question ID changes (prevents timer ticks from restarting audio)
+      if (audioPlayer && audioPlayer.dataset.qid !== q.id) {
+        audioPlayer.dataset.qid = q.id;
+        audioPlayer.pause();
+        const url = (q.audioUrl || q.media || "").replace(/\\/g, "/");
+        audioPlayer.src = url;
+        audioPlayer.load();
+        if (audioStatus) audioStatus.textContent = "Room audio ready — playing from presenter screen";
+
+        audioPlayer.onplay = () => { if (audioStatus) audioStatus.textContent = "🔊 Playing audio for the room..."; };
+        audioPlayer.onpause = () => { if (audioStatus) audioStatus.textContent = "⏸ Paused"; };
+        audioPlayer.onended = () => { if (audioStatus) audioStatus.textContent = "✓ Audio completed"; };
+        audioPlayer.onerror = () => { if (audioStatus) audioStatus.textContent = "⚠️ Audio playback error. Check file."; };
+
+        // Attempt automated playback for the room
+        audioPlayer.play().catch(() => {
+          if (audioStatus) audioStatus.textContent = "▶ Press play to begin room audio";
+        });
+      }
     } else if (q.type === "showdown") {
       showdownContainer.style.display = "grid";
       const cont = q.contenders || {};
       document.getElementById("stageContenderA").textContent = cont.A || "Waiting for live response...";
       document.getElementById("stageContenderB").textContent = cont.B || "Waiting for live response...";
       document.getElementById("stageContenderC").textContent = cont.C || "Waiting for live response...";
+      if (audioPlayer) { audioPlayer.pause(); audioPlayer.dataset.qid = ""; }
     }
 
     // Voided Overlay

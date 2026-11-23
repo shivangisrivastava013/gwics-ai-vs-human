@@ -200,19 +200,22 @@
   <!-- Top Navigation -->
   <header class="app-header">
     <div class="brand-badge">
-      <div class="brand-title">
-        <span class="gold">HOST</span> DASHBOARD
+      <img src="assets/media/gwics_logo.png" alt="GWiCS" style="width:38px; height:38px; object-fit:contain; background:#FFFFFF; border-radius:50%; padding:2px; border:1px solid var(--gold-400); box-shadow:0 0 8px rgba(229,184,66,0.3); margin-right:8px;">
+      <div>
+        <div class="brand-title">
+          <span class="gold">HOST</span> DASHBOARD
+        </div>
+        <span class="brand-sub">GWiCS Showdown Controller</span>
       </div>
-      <span class="brand-sub">GWiCS Showdown Controller</span>
     </div>
 
-    <div style="display:flex; align-items:center; gap:12px;">
+    <div style="display:flex; align-items:center; gap:10px;">
       <div class="connection-badge connecting" id="hostConnBadge">
         <span>●</span> <span id="hostConnText">Initializing...</span>
       </div>
-      <a href="projector.html" target="_blank" class="btn-host-action" style="padding:6px 14px; font-size:12px;">
-        ⛶ Open Projector ↗
-      </a>
+      <button class="btn-host-action" id="btnHostPresent" style="background:var(--gold-400); color:#000; font-weight:700; padding:6px 16px; font-size:12px; cursor:pointer;" title="Launch Audience Presentation Screen">
+        📺 Present ↗
+      </button>
       <a href="index.html" target="_blank" class="btn-host-action" style="padding:6px 14px; font-size:12px;">
         📱 Participant View ↗
       </a>
@@ -274,7 +277,7 @@
           BOTORNOT
         </div>
         <div style="font-size:13px; color:var(--text-muted);">
-          <span id="hostTeamsCountLabel">0</span> Teams Connected
+          <span id="hostTeamsCountLabel">0</span> Players Connected
         </div>
       </div>
 
@@ -360,9 +363,24 @@
         <!-- Submissions Monitor -->
         <div style="display:flex; align-items:center; justify-content:space-between; background:var(--charcoal-900); padding:12px 16px; border-radius:var(--radius-md); margin-bottom:20px; font-family:var(--font-mono); font-size:13px;">
           <div>
-            Submissions: <strong style="color:var(--gold-400);" id="hostSubmissionsCount">0 / 0 Teams</strong>
+            Submissions: <strong style="color:var(--gold-400);" id="hostSubmissionsCount">0 / 0 Players</strong>
           </div>
           <div id="hostSubmissionStatusText" style="color:var(--text-dim);">Ready to launch</div>
+        </div>
+
+        <!-- Audio Preview & Playback Panel (Visible only when question is audio) -->
+        <div class="question-card" id="hostAudioCard" style="display:none; margin-bottom:20px; background:var(--charcoal-900); border:1px solid var(--gold-500);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase;">
+              🔊 Question Audio Preview & Playback (Laptop / Aux)
+            </div>
+            <div id="hostAudioStatus" style="font-family:var(--font-mono); font-size:12px; color:var(--text-dim);">Ready</div>
+          </div>
+          <audio id="hostAudioEl" controls preload="metadata" style="width:100%;"></audio>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button type="button" class="btn-host-action" id="btnHostPlayAudio" style="padding:4px 12px; font-size:11px;">▶ Play / Pause</button>
+            <button type="button" class="btn-host-action" id="btnHostReplayAudio" style="padding:4px 12px; font-size:11px;">↺ Replay from Start</button>
+          </div>
         </div>
 
         <!-- Secret Answer & Tell Box (Visible ONLY to Host) -->
@@ -428,7 +446,7 @@
       <!-- Connected Teams & Live Leaderboard -->
       <div class="question-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <h3 style="font-family:var(--font-display); font-size:18px;">Connected Teams & XP Leaderboard</h3>
+          <h3 style="font-family:var(--font-display); font-size:18px;">Connected Players & XP Leaderboard</h3>
           <button class="btn-host-action" id="btnRefreshTeams" style="padding:4px 12px; font-size:11px;">Refresh</button>
         </div>
 
@@ -436,7 +454,7 @@
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Team Name</th>
+              <th>Display Name</th>
               <th>Current Answer</th>
               <th>XP Balance</th>
               <th>Hint Used</th>

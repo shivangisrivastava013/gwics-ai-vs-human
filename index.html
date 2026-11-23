@@ -66,6 +66,33 @@
     .btn-change-team:hover {
       color: var(--gold-400);
     }
+
+    /* GWiCS Logo */
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+      background: #FFFFFF;
+      border-radius: 50%;
+      padding: 3px;
+      border: 1px solid var(--gold-400);
+      box-shadow: 0 0 10px rgba(229, 184, 66, 0.3);
+      flex-shrink: 0;
+    }
+
+    /* Kahoot-inspired live participant badges */
+    .player-rank-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--charcoal-900);
+      border: 1px solid var(--charcoal-700);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--gold-400);
+    }
   </style>
 </head>
 <body>
@@ -73,10 +100,13 @@
   <!-- Top App Navigation -->
   <header class="app-header">
     <div class="brand-badge">
-      <div class="brand-title">
-        <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
+      <img src="assets/media/gwics_logo.png" alt="GWiCS Logo" class="brand-logo">
+      <div>
+        <div class="brand-title">
+          <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
+        </div>
+        <span class="brand-sub">GWiCS Showdown</span>
       </div>
-      <span class="brand-sub">GWiCS</span>
     </div>
 
     <div style="display:flex; align-items:center; gap:8px;">
@@ -122,23 +152,23 @@
       <!-- Playful Followup Revealed when checked -->
       <div class="robot-followup" id="robotFollowup">
         <strong>But can you spot one?</strong>
-        <span>Put your human instincts to the test. Form a table team and join the live battle.</span>
+        <span>Join the live challenge on your own phone. Every instinct counts. Your answers, your score.</span>
       </div>
 
       <!-- Join Form -->
       <form class="join-form" id="joinForm">
         <div class="form-group">
-          <label class="form-label" for="roomCodeInput">Room Code</label>
+          <label class="form-label" for="roomCodeInput">Game PIN / Room Code</label>
           <input type="text" class="form-input" id="roomCodeInput" value="BOTORNOT" maxlength="12" placeholder="e.g. BOTORNOT" required>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="teamNameInput">Team Name</label>
-          <input type="text" class="form-input" id="teamNameInput" placeholder="e.g., Table 4 · Turing's Heirs" maxlength="32" required>
+          <label class="form-label" for="teamNameInput">Display Name</label>
+          <input type="text" class="form-input" id="teamNameInput" placeholder="Your name or nickname" maxlength="32" required>
         </div>
 
         <button type="submit" class="btn-join">
-          <span>Join the Challenge</span>
+          <span>Join Game</span>
           <span>⚡</span>
         </button>
       </form>
@@ -147,7 +177,7 @@
       <div class="entrance-secondary-links">
         <button class="entrance-link" id="btnOpenRules">How to Play</button>
         <button class="entrance-link" id="btnOpenPractice">Practice Sandbox</button>
-        <a href="projector.html" class="entrance-link" style="color:var(--text-dim);" target="_blank">Projector View ↗</a>
+        <a href="host.html" class="entrance-link" style="color:var(--gold-400);">Host a game →</a>
       </div>
     </section>
 
@@ -161,8 +191,8 @@
         <div>
           <span class="status-round-tag" id="gameRoundTag">Round 1</span>
           <div style="display:flex; align-items:center; gap:8px;">
-            <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Team: Loading...</div>
-            <button class="btn-change-team" id="btnChangeTeam">Change Team</button>
+            <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Player: Loading...</div>
+            <button class="btn-change-team" id="btnChangeTeam">Leave Game</button>
           </div>
         </div>
         <div class="status-timer-pill" id="gameTimerPill">
@@ -173,13 +203,13 @@
 
       <!-- Waiting / Lobby State -->
       <div class="question-card" id="cardLobbyState" style="text-align:center; padding:40px 20px;">
-        <div style="font-size:40px; margin-bottom:12px;">🛰️</div>
-        <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Session!</h2>
-        <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 20px;">
-          Starting balance: <strong>100 XP</strong>. Discuss with your table. When the host launches the question, answer options will appear here.
+        <div style="font-size:40px; margin-bottom:12px;">🎮</div>
+        <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game!</h2>
+        <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 16px;">
+          Starting balance: <strong>100 XP</strong>. Look at the main screen—your name will appear on the audience display.
         </p>
-        <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400);">
-          Watching for Host launch...
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:6px 14px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700);">
+          Watching for the host to launch the first question...
         </div>
       </div>
 
@@ -348,10 +378,11 @@
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Rules & Scoring</div>
       <h3 id="rulesModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:12px;">How The Showdown Works</h3>
       <ul style="padding-left:18px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:10px; line-height:1.6;">
-        <li><strong>One Captain Submits:</strong> One phone per table submits the team's answer. Everyone else discusses at the table and watches the projector.</li>
-        <li><strong>XP Economy:</strong> Every team starts with <strong>100 XP</strong>. Correct answers award <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
-        <li><strong>Paid Hints:</strong> You can unlock 1 hint per question for <strong>25 XP</strong>. The hint is private to your team.</li>
-        <li><strong>Locked Submissions:</strong> Once your captain locks in your choice, your answer is sealed until the host reveals the verdict.</li>
+        <li><strong>Individual Play:</strong> Every attendee plays on their own phone with their own name and submits their own choices.</li>
+        <li><strong>XP Economy:</strong> You begin with <strong>100 XP</strong>. Each correct answer awards <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
+        <li><strong>Paid Hints:</strong> Need a forensic clue? Unlock 1 hint per question for <strong>25 XP</strong>. The clue is private to your phone.</li>
+        <li><strong>Locked Submissions:</strong> Once you tap your choice, your answer is sealed until the host reveals the verdict.</li>
+        <li><strong>Standings:</strong> See how your human instincts rank on the live leaderboard!</li>
       </ul>
     </div>
   </div>
@@ -360,8 +391,8 @@
   <div class="modal-overlay" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
     <div class="modal-dialog">
       <button class="modal-close" id="btnCloseHistory" aria-label="Close score history">✕</button>
-      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Team Record</div>
-      <h3 id="historyModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">XP Balance & History</h3>
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Your Record</div>
+      <h3 id="historyModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">Your XP Balance & History</h3>
       <div id="historyList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; font-size:13px;">
         <!-- Populated dynamically -->
       </div>
@@ -371,13 +402,13 @@
   <!-- 5. Leave / Change Team Confirmation Modal -->
   <div class="modal-overlay" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveModalTitle">
     <div class="modal-dialog">
-      <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave or Switch Team?</h3>
+      <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave the Game?</h3>
       <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
-        Leaving will disconnect your phone from this table team. You can join another team or rejoin later.
+        Your progress is saved on this device. You can rejoin at any time with the same name.
       </p>
       <div style="display:flex; gap:12px;">
         <button class="btn-join" style="flex:1; padding:12px; background:var(--color-danger); border-color:var(--color-danger);" id="btnConfirmLeave">
-          Leave Team
+          Leave Game
         </button>
         <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelLeave">
           Cancel
