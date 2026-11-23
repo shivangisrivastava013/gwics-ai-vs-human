@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projector Stage · BOT OR NOT? · GWiCS</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Unbounded:wght@700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/game.css">
+  <style>
+    /* Dedicated 16:9 High-Contrast Projector Styling */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #07090D;
+      color: #F8FAFC;
+    }
+
+    .projector-stage {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3.5vw 4.5vw;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--charcoal-700);
+      padding-bottom: 1.5vw;
+    }
+
+    .stage-brand {
+      font-family: var(--font-display);
+      font-size: 2.2vw;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+    }
+
+    .stage-brand .gold { color: var(--gold-500); }
+    .stage-brand .cyan { color: var(--cyan-500); }
+
+    .stage-timer-box {
+      font-family: var(--font-mono);
+      font-size: 2.4vw;
+      font-weight: 800;
+      background: var(--charcoal-850);
+      border: 2px solid var(--charcoal-700);
+      padding: 0.4vw 1.6vw;
+      border-radius: var(--radius-pill);
+      color: var(--gold-400);
+      display: flex;
+      align-items: center;
+      gap: 1vw;
+    }
+
+    .stage-timer-box.urgent {
+      color: var(--color-danger);
+      border-color: var(--color-danger);
+      animation: pulse-border 1s infinite;
+    }
+
+    /* Stage Canvas */
+    .stage-canvas {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 2vw 0;
+      position: relative;
+    }
+
+    /* Lobby View */
+    .projector-lobby {
+      text-align: center;
+      max-width: 70vw;
+    }
+
+    .lobby-big-title {
+      font-family: var(--font-display);
+      font-size: 5.5vw;
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: 2vw;
+    }
+
+    .lobby-join-instructions {
+      background: var(--charcoal-850);
+      border: 2px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      padding: 2vw 3vw;
+      display: inline-flex;
+      flex-direction: column;
+      gap: 1vw;
+      box-shadow: 0 0 40px var(--gold-subtle);
+    }
+
+    .lobby-room-code-tag {
+      font-family: var(--font-mono);
+      font-size: 2.8vw;
+      font-weight: 900;
+      color: var(--gold-400);
+      letter-spacing: 0.1em;
+    }
+
+    .lobby-teams-counter {
+      font-family: var(--font-mono);
+      font-size: 1.4vw;
+      color: var(--text-muted);
+      margin-top: 1.5vw;
+    }
+
+    /* Active Question Stage View */
+    .projector-question-layout {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .projector-q-head {
+      font-family: var(--font-display);
+      font-size: 2.8vw;
+      font-weight: 800;
+      margin-bottom: 0.5vw;
+      line-height: 1.2;
+    }
+
+    .projector-q-prompt {
+      font-size: 1.6vw;
+      color: var(--text-muted);
+      margin-bottom: 1.5vw;
+    }
+
+    /* Media Area */
+    .projector-media-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: var(--radius-md);
+      background: var(--charcoal-900);
+      border: 1px solid var(--charcoal-700);
+      position: relative;
+    }
+
+    .projector-media-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Literature Dual Cards */
+    .projector-text-duo {
+      width: 100%;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2vw;
+    }
+
+    .projector-poem-card {
+      background: var(--charcoal-850);
+      border: 2px solid var(--charcoal-700);
+      border-radius: var(--radius-md);
+      padding: 2vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-family: var(--font-serif);
+      font-size: 1.8vw;
+      line-height: 1.6;
+      white-space: pre-line;
+      color: #FFFFFF;
+    }
+
+    .projector-poem-tag {
+      font-family: var(--font-mono);
+      font-size: 1.3vw;
+      font-weight: 800;
+      color: var(--gold-400);
+      margin-bottom: 1vw;
+      text-transform: uppercase;
+    }
+
+    /* Audio View */
+    .projector-audio-view {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2vw;
+      text-align: center;
+      width: 100%;
+    }
+
+    .audio-big-orb {
+      width: 14vw;
+      height: 14vw;
+      border-radius: 50%;
+      background: var(--charcoal-850);
+      border: 4px solid var(--cyan-500);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-display);
+      font-size: 2vw;
+      font-weight: 800;
+      box-shadow: 0 0 40px var(--cyan-glow);
+    }
+
+    /* Submissions Progress Footer */
+    .stage-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 2px solid var(--charcoal-700);
+      padding-top: 1.5vw;
+      font-family: var(--font-mono);
+      font-size: 1.3vw;
+      color: var(--text-muted);
+    }
+
+    .submissions-meter {
+      display: flex;
+      align-items: center;
+      gap: 1vw;
+    }
+
+    .submissions-bar {
+      width: 20vw;
+      height: 1.2vw;
+      background: var(--charcoal-800);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .submissions-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-500), var(--cyan-500));
+      border-radius: var(--radius-pill);
+      transition: width 0.3s ease;
+    }
+
+    /* Grand Reveal Overlay Banner */
+    .stage-reveal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 9, 13, 0.95);
+      border: 3px solid var(--gold-500);
+      border-radius: var(--radius-lg);
+      padding: 3vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      animation: fadeIn 0.4s ease;
+      z-index: 50;
+      box-shadow: 0 0 60px var(--gold-glow);
+    }
+
+    .reveal-badge-giant {
+      font-family: var(--font-display);
+      font-size: 4vw;
+      font-weight: 900;
+      color: #000;
+      background: var(--gold-500);
+      padding: 0.6vw 3vw;
+      border-radius: var(--radius-pill);
+      margin-bottom: 2vw;
+      box-shadow: 0 0 30px var(--gold-glow);
+    }
+
+    .reveal-badge-giant.ai {
+      background: var(--cyan-500);
+      box-shadow: 0 0 30px var(--cyan-glow);
+    }
+
+    .reveal-tell-giant {
+      font-size: 2vw;
+      color: #FFFFFF;
+      max-width: 65vw;
+      line-height: 1.5;
+    }
+
+    /* Leaderboard Podium Stage */
+    .stage-leaderboard-grid {
+      width: 100%;
+      max-width: 70vw;
+      display: flex;
+      flex-direction: column;
+      gap: 1vw;
+    }
+
+    .stage-board-card {
+      display: grid;
+      grid-template-columns: 4vw 1fr 14vw;
+      align-items: center;
+      background: var(--charcoal-850);
+      border: 1px solid var(--charcoal-700);
+      border-radius: var(--radius-md);
+      padding: 1vw 2vw;
+      font-size: 1.8vw;
+      font-weight: 700;
+    }
+
+    .stage-board-card:nth-child(1) {
+      border-color: var(--gold-500);
+      background: rgba(229, 184, 66, 0.12);
+    }
+
+    .fs-toggle-btn {
+      position: fixed;
+      top: 1vw;
+      right: 1vw;
+      opacity: 0.3;
+      transition: opacity 0.2s;
+      z-index: 1000;
+    }
+
+    .fs-toggle-btn:hover {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fullscreen Toggle Button (Auto-hidden in corner) -->
+  <button class="btn btn-outline-charcoal btn-sm fs-toggle-btn" id="btnFullscreen" title="Toggle Fullscreen (F)">
+    ⛶ Fullscreen
+  </button>
+
+  <div class="projector-stage">
+    
+    <!-- Top Stage Header -->
+    <header class="stage-header">
+      <div class="stage-brand">
+        <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
+        <span style="font-family:var(--font-mono); font-size:1.2vw; color:var(--text-dim); margin-left:1vw; text-transform:uppercase;">GWiCS Showdown</span>
+      </div>
+
+      <div class="stage-timer-box" id="stageTimerBox">
+        <span>⏱</span>
+        <span id="stageTimerNum">45s</span>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Stage Canvas -->
+    <main class="stage-canvas" id="stageCanvas">
+      
+      <!-- 1. LOBBY VIEW -->
+      <div class="projector-lobby" id="stageLobbyView">
+        <h1 class="lobby-big-title">
+          CAN YOU SPOT <span style="color:var(--cyan-500);">THE BOT?</span>
+        </h1>
+
+        <div class="lobby-join-instructions">
+          <div style="font-family:var(--font-mono); font-size:1.4vw; color:var(--text-muted); text-transform:uppercase;">
+            Join on your table captain's phone
+          </div>
+          <div style="font-family:var(--font-display); font-size:2vw; font-weight:800; color:#FFFFFF;">
+            shivangisrivastava013.github.io/gwics-ai-vs-human
+          </div>
+          <div class="lobby-room-code-tag" id="stageRoomCode">
+            ROOM: BOTORNOT
+          </div>
+        </div>
+
+        <div class="lobby-teams-counter" id="stageTeamsCount">
+          0 Teams Ready at Tables
+        </div>
+      </div>
+
+      <!-- 2. QUESTION VIEW (Synchronized with Host) -->
+      <div class="projector-question-layout" id="stageQuestionView" style="display:none;">
+        <div>
+          <h2 class="projector-q-head" id="stageQTitle">Question Title</h2>
+          <div class="projector-q-prompt" id="stageQPrompt">Prompt description</div>
+        </div>
+
+        <!-- Media Stage: Image -->
+        <div class="projector-media-container" id="stageImgContainer" style="display:none;">
+          <img id="stageImgEl" src="" alt="Projector visual">
+        </div>
+
+        <!-- Media Stage: Literature Duo -->
+        <div class="projector-text-duo" id="stageTextContainer" style="display:none;">
+          <div class="projector-poem-card">
+            <span class="projector-poem-tag">Passage A</span>
+            <div id="stagePassageA">Passage A</div>
+          </div>
+          <div class="projector-poem-card">
+            <span class="projector-poem-tag">Passage B</span>
+            <div id="stagePassageB">Passage B</div>
+          </div>
+        </div>
+
+        <!-- Media Stage: Audio Voice Check -->
+        <div class="projector-audio-view" id="stageAudioContainer" style="display:none;">
+          <div class="audio-big-orb" id="stageAudioOrb">
+            <span>Clip</span>
+          </div>
+          <div style="font-family:var(--font-serif); font-size:2vw; max-width:60vw; color:#FFFFFF;" id="stageAudioScript">
+            “Audio transcript”
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. GRAND REVEAL BANNER (Appears when host triggers reveal) -->
+      <div class="stage-reveal-overlay" id="stageRevealOverlay" style="display:none;">
+        <div class="reveal-badge-giant" id="stageRevealBadge">AI GENERATED</div>
+        <div class="reveal-tell-giant" id="stageRevealTell">
+          Explanation of forensic tell.
+        </div>
+      </div>
+
+      <!-- 4. LEADERBOARD VIEW -->
+      <div class="projector-lobby" id="stageLeaderboardView" style="display:none;">
+        <h2 style="font-family:var(--font-display); font-size:3.5vw; font-weight:900; margin-bottom:1.5vw; color:var(--gold-400);">
+          🏆 Official Standings
+        </h2>
+        <div class="stage-leaderboard-grid" id="stageLeaderboardList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Bottom Stage Footer -->
+    <footer class="stage-footer">
+      <div id="stageRoundLabel">Round 1: Real or AI?</div>
+
+      <div class="submissions-meter" id="stageMeterBox">
+        <span>Submitted:</span>
+        <div class="submissions-bar">
+          <div class="submissions-fill" id="stageSubmissionsFill" style="width:0%;"></div>
+        </div>
+        <span id="stageSubmissionsCount">0 / 0</span>
+      </div>
+
+      <div>Graduate Women in Computing Society</div>
+    </footer>
+
+  </div>
+
+  <script src="js/sync_engine.js"></script>
+  <script src="js/projector.js"></script>
+</body>
+</html>

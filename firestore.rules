@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Game State: Publicly readable by all participants and projector
+    // ONLY writable by authenticated Host
+    match /game/state {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 2. Teams: Each team captain can read and update their own team record
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if request.resource.data.xp == 100;
+      allow update: if request.auth != null || 
+        (resource.data.teamToken == request.resource.data.teamToken);
+    }
+
+    // 3. Admin Vault: ONLY accessible by authenticated Host
+    // Participants CANNOT access the answer key, tells, or unreleased rounds
+    match /admin_vault/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -1,65 +1,48 @@
-# GWiCS: AI vs Human Showdown Website
+# BOT OR NOT? · GWiCS Collegiate Tech Showdown
 
-Official event website for the **AI vs. Human: The Ultimate Showdown** flagship collegiate event hosted by **Graduate Women in Computing Sciences (GWiCS)** at the New Jersey Institute of Technology (NJIT).
-
----
-
-## 🚀 Free Hosting Guide (100% Free Forever)
-
-This website is a modern, pure client-side static web application (HTML5, CSS3, vanilla JavaScript, audio, and media). It requires **no paid servers, no monthly subscriptions, and no database management**.
-
-Here are the top free ways to host it:
-
-### Option 1: GitHub Pages (Recommended for Student Clubs & GWiCS)
-* **Cost:** 100% Free forever
-* **Features:** Free SSL (HTTPS), custom domain support (`gwics.njit.edu` or `username.github.io/ai-vs-human`), automatic updates on `git push`.
-* **Steps:**
-  1. Create a new repository on [GitHub](https://github.com/new) (e.g. `gwics-ai-vs-human`).
-  2. Push this folder to GitHub:
-     ```bash
-     git init
-     git add .
-     git commit -m "Initial commit for GWiCS AI vs Human Showdown"
-     git branch -M main
-     git remote add origin https://github.com/<YOUR-USERNAME>/gwics-ai-vs-human.git
-     git push -u origin main
-     ```
-  3. Go to **Repository Settings** > **Pages**.
-  4. Under **Branch**, select `main` and `/ (root)` and click **Save**.
-  5. Your site will be live within 60 seconds at `https://<YOUR-USERNAME>.github.io/gwics-ai-vs-human/`!
+Official live competition application for **BOT OR NOT? The Ultimate Showdown** hosted by the **Graduate Women in Computing Society (GWiCS)**.
 
 ---
 
-### Option 2: Netlify (Fastest 10-Second Drag & Drop, No Code Needed)
-* **Cost:** 100% Free forever
-* **Steps:**
-  1. Open [app.netlify.com/drop](https://app.netlify.com/drop) in your browser.
-  2. Drag and drop this whole `gwics-ai-vs-human-website` folder directly into the upload circle on the webpage.
-  3. Netlify will instantly deploy it and give you a live HTTPS link (e.g. `https://gwics-ai-vs-human.netlify.app`).
+## 🏛️ Architecture: The Three Connected Views
+
+| View | Target URL | Who Uses It | What It Shows |
+| :--- | :--- | :--- | :--- |
+| **📱 Participant View** | [`index.html`](index.html) | Table Team Captains | Playful Robot Checkbox gate, Join session, active question, big answer buttons, 25 XP paid hints, submission confirmation, revealed results. |
+| **📽️ Projector Stage** | [`projector.html`](projector.html) | Main Hall Screen (16:9) | Giant room code, current question & media, countdown timer, live submitted count, grand reveal verdict, animated leaderboard. |
+| **🔐 Private Host Dashboard** | [`host.html`](host.html) | Event Organizer / Host Laptop | Protected by passcode, question launcher, secret answer key & tells, pause/resume, lock submissions, manual XP adjustments, audio test, CSV export. |
 
 ---
 
-### Option 3: Vercel
-* **Cost:** 100% Free on the Hobby tier
-* **Steps:**
-  1. Go to [vercel.com](https://vercel.com) and log in.
-  2. Click **Add New** > **Project** and import your GitHub repository (or use the Vercel CLI).
-  3. Click **Deploy**; it goes live on global edge CDN with a `.vercel.app` URL.
+## ⚡ XP & Hint Economy System
+
+* **Starting Balance:** Every team starts with **100 XP** upon joining.
+* **Correct Answer:** **+100 XP**
+* **Incorrect Answer:** **0 XP**
+* **Unlock Forensic Hint:** **−25 XP** (Max 1 hint per question).
+  * Prompts with confirmation: *"Spend 25 XP on a hint? Your balance will change from X to Y XP."*
+  * Private to that team only.
+  * Remains unlocked after page reload.
+  * Disabled after submission or when time expires.
+* **Persistent Sessions:** Captains receive a private session token saved in `localStorage`. Refreshing or reconnecting preserves team identity, XP balance, unlocked hints, and submitted answers.
 
 ---
 
-### Option 4: Cloudflare Pages
-* **Cost:** 100% Free with unlimited bandwidth
-* **Steps:**
-  1. Go to the [Cloudflare Dashboard](https://dash.cloudflare.com) > **Workers & Pages**.
-  2. Select **Create Application** > **Pages** > **Direct Upload**.
-  3. Upload the project folder and click **Deploy**.
+## 🔑 Host Passcode
+* **Default Organizer Passcode:** `GWICS2026!`
 
 ---
 
-## 🛠️ Local Testing
-To test the website locally on your computer:
-```bash
-python -m http.server 8080
-```
-Then visit `http://localhost:8080` in your browser.
+## 🚀 Pushing to GitHub Pages
+
+1. Open PowerShell and navigate to the project directory:
+   ```powershell
+   cd C:\Users\SHIVANGI\.gemini\antigravity\scratch\gwics-ai-vs-human-website
+   git add .
+   git commit -m "Implement 3-view architecture: Participant, Projector, and Host with XP hint system"
+   git push -u origin main
+   ```
+2. Your live URLs:
+   * **Participant Portal:** `https://shivangisrivastava013.github.io/gwics-ai-vs-human/`
+   * **Projector Stage:** `https://shivangisrivastava013.github.io/gwics-ai-vs-human/projector.html`
+   * **Host Dashboard:** `https://shivangisrivastava013.github.io/gwics-ai-vs-human/host.html`
