@@ -45,15 +45,50 @@
     setupPracticeSandbox();
     setupLeaveTeam();
 
-    // Check for existing player session in localStorage
-    const saved = localStorage.getItem(SESSION_KEY) || localStorage.getItem("botornot_player_session");
-    if (saved) {
+    // 1. Check if user arrived via GET query parameter fallback (e.g. ?practiceRoomCodeInput=BOTORNOT&practiceTeamNameInput=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const qRoom = urlParams.get("practiceRoomCodeInput") || urlParams.get("roomCodeInput") || urlParams.get("room");
+    const qName = urlParams.get("practiceTeamNameInput") || urlParams.get("teamNameInput") || urlParams.get("name");
+    if (qName) {
       try {
-        const session = JSON.parse(saved);
-        if (session.teamId && session.teamName) {
-          rejoinSession(session.roomCode || "BOTORNOT", session.teamName, session.teamId);
-        }
+        window.history.replaceState({}, "", window.location.pathname);
       } catch (e) {}
+      const teamId = "team_" + Math.random().toString(36).substr(2, 9);
+      rejoinSession(qRoom || "BOTORNOT", qName.trim(), teamId);
+    } else {
+      // 2. Check for existing player session in localStorage
+      const saved = localStorage.getItem(SESSION_KEY) || localStorage.getItem("botornot_player_session");
+      if (saved) {
+        try {
+          const session = JSON.parse(saved);
+          if (session.teamId && session.teamName) {
+            myTeam.id = session.teamId;
+            myTeam.name = session.teamName;
+            myTeam.roomCode = session.roomCode || "BOTORNOT";
+
+            Engine.initAsParticipant(session.roomCode || "BOTORNOT", session.teamName, session.teamId);
+
+            // If a live question is active, jump straight into game
+            if (Engine.publicState && Engine.publicState.status === "QUESTION") {
+              document.getElementById("viewPractice").style.display = "none";
+              document.getElementById("viewInGame").style.display = "flex";
+              document.getElementById("headerXpPill").style.display = "flex";
+              document.getElementById("gameTeamNameLabel").textContent = `Player: ${session.teamName} · Room: ${session.roomCode || 'BOTORNOT'}`;
+            } else {
+              // Default to Practice Sandbox on initial site load!
+              document.getElementById("viewPractice").style.display = "flex";
+              document.getElementById("viewInGame").style.display = "none";
+              const connectedBadge = document.getElementById("practiceConnectedBadge");
+              if (connectedBadge) {
+                connectedBadge.style.display = "inline-block";
+                connectedBadge.textContent = `🟢 Connected: Room ${session.roomCode || 'BOTORNOT'} (${session.teamName})`;
+              }
+              const nameInput = document.getElementById("practiceTeamNameInput");
+              if (nameInput) nameInput.value = session.teamName;
+            }
+          }
+        } catch (e) {}
+      }
     }
 
     // Engine Event Listeners
@@ -136,18 +171,38 @@
       });
     }
 
+    window.GWICS_JoinFromPractice = function () {
+      const roomInput = document.getElementById("practiceRoomCodeInput");
+      const nameInput = document.getElementById("practiceTeamNameInput");
+      const roomCode = (roomInput ? roomInput.value : "").trim().toUpperCase() || "BOTORNOT";
+      const teamName = (nameInput ? nameInput.value : "").trim();
+
+      if (!teamName) {
+        if (nameInput) {
+          nameInput.focus();
+          if (nameInput.reportValidity) nameInput.reportValidity();
+        }
+        return;
+      }
+
+      const teamId = "team_" + Math.random().toString(36).substr(2, 9);
+      rejoinSession(roomCode, teamName, teamId);
+    };
+
     const practiceForm = document.getElementById("practiceJoinForm");
     if (practiceForm) {
       practiceForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const roomCode = document.getElementById("practiceRoomCodeInput").value.trim().toUpperCase() || "BOTORNOT";
-        const teamName = document.getElementById("practiceTeamNameInput").value.trim();
-
-        if (!teamName) return;
-
-        const teamId = "team_" + Math.random().toString(36).substr(2, 9);
-        rejoinSession(roomCode, teamName, teamId);
+        window.GWICS_JoinFromPractice();
       });
+    }
+
+    const btnJoinSubmit = document.getElementById("btnPracticeJoinSubmit");
+    if (btnJoinSubmit) {
+      btnJoinSubmit.onclick = (e) => {
+        e.preventDefault();
+        window.GWICS_JoinFromPractice();
+      };
     }
 
     const btnBackPrac = document.getElementById("btnBackToPracticeWhileWaiting");

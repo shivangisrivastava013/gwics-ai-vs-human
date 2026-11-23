@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>BOT OR NOT? · GWiCS Collegiate Tech Showdown</title>
   <meta name="description" content="BOT OR NOT? Presented by Graduate Women in Computing Society. Test your human instincts against machine intelligence.">
 
@@ -11,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/game.css?v=20261123c">
   <style>
     /* Connection status badge */
     .connection-badge {
@@ -357,7 +360,7 @@
             </div>
           </div>
 
-          <form class="join-form" id="practiceJoinForm" style="display:flex; flex-direction:column; gap:12px;">
+          <form class="join-form" id="practiceJoinForm" onsubmit="if(window.GWICS_JoinFromPractice){window.GWICS_JoinFromPractice();return false;}return false;" style="display:flex; flex-direction:column; gap:12px;">
             <div style="display:flex; flex-wrap:wrap; gap:10px;">
               <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
                 <label class="form-label" for="practiceRoomCodeInput">Game PIN / Room Code</label>
@@ -368,7 +371,7 @@
                 <input type="text" class="form-input" id="practiceTeamNameInput" placeholder="Your name or nickname" maxlength="32" required>
               </div>
             </div>
-            <button type="submit" class="btn-join" style="width:100%; justify-content:center; padding:12px;">
+            <button type="submit" class="btn-join" id="btnPracticeJoinSubmit" style="width:100%; justify-content:center; padding:12px;">
               <span>Enter Game Room</span>
               <span>🚀</span>
             </button>
@@ -954,12 +957,12 @@
 
   <!-- Scripts: Networking, Modules, and Coordinator -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="js/practice_bank.js"></script>
-  <script src="js/firebase_config.js"></script>
-  <script src="js/sync_engine.js"></script>
-  <script src="js/participant.js"></script>
-  <script src="js/host.js"></script>
-  <script src="js/projector.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/practice_bank.js?v=20261123c"></script>
+  <script src="js/firebase_config.js?v=20261123c"></script>
+  <script src="js/sync_engine.js?v=20261123c"></script>
+  <script src="js/participant.js?v=20261123c"></script>
+  <script src="js/host.js?v=20261123c"></script>
+  <script src="js/projector.js?v=20261123c"></script>
+  <script src="js/app.js?v=20261123c"></script>
 </body>
 </html>
