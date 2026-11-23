@@ -24,7 +24,9 @@
   function createInitialPublicState() {
     return {
       roomCode: DEFAULT_ROOM_CODE,
-      status: "LOBBY", // LOBBY, QUESTION, LOCKED, VOIDED, REVEALED, SHOWDOWN, RESULTS, COMPLETED
+      sessionId: null,
+      packHash: null,
+      status: "LOBBY", // LOBBY, QUESTION, LOCKED, VOIDED, REVEALED, ROUND_STANDINGS, COMPLETED
       roundNum: 1,
       questionIndex: 0,
       totalQuestions: 25,
@@ -48,12 +50,15 @@
 
   class SyncEngine {
     constructor() {
-      this.mode = "hybrid"; // peerjs + broadcast + firebase
-      this.connectionStatus = "OFFLINE"; // OFFLINE, CONNECTING, CONNECTED, RECONNECTING
+      this.mode = "hybrid"; // peerjs + broadcast + firebase + backend
+      this.connectionStatus = "OFFLINE"; // OFFLINE, CONNECTING, CONNECTED_P2P, CONNECTED_BACKEND, RECONNECTING
       this.channel = null;
       this.peer = null;
       this.peerConnections = {}; // peerId -> connection (for host)
       this.hostConnection = null; // connection to host (for participant & projector)
+      this.backendActive = false;
+      this.backendUrl = null;
+      this.sseEventSource = null;
       
       this.listeners = {
         stateChange: [],
@@ -117,6 +122,58 @@
             } catch (err) {}
           }
         });
+      }
+    }
+
+    /* ----------------------------------------------------------------------
+       AUTHORITATIVE BACKEND & SSE NETWORKING
+       ---------------------------------------------------------------------- */
+    async checkBackend() {
+      const candidate = window.GWICS_BACKEND_URL || (
+        typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+          ? `http://${window.location.hostname}:3000`
+          : null
+      );
+      if (!candidate) return null;
+      try {
+        const res = await fetch(`${candidate}/api/state`, { signal: AbortSignal.timeout(1200) });
+        if (res.ok) {
+          const json = await res.json();
+          this.backendUrl = candidate;
+          this.backendActive = true;
+          if (json && json.state) {
+            this.onRemoteStateUpdate(json.state);
+          }
+          return candidate;
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    connectBackendSSE() {
+      if (!this.backendUrl || typeof EventSource === "undefined") return;
+      if (this.sseEventSource) {
+        this.sseEventSource.close();
+      }
+      try {
+        const sse = new EventSource(`${this.backendUrl}/api/events`);
+        this.sseEventSource = sse;
+        sse.onopen = () => {
+          this.setConnectionStatus("CONNECTED_BACKEND");
+        };
+        sse.onmessage = (evt) => {
+          try {
+            const data = JSON.parse(evt.data);
+            if (data && data.state) {
+              this.onRemoteStateUpdate(data.state);
+            }
+          } catch (err) {}
+        };
+        sse.onerror = () => {
+          this.setConnectionStatus("RECONNECTING");
+        };
+      } catch (e) {
+        console.warn("SSE connection error:", e);
       }
     }
 
@@ -356,11 +413,19 @@
     /* ----------------------------------------------------------------------
        HOST CONTROLS
        ---------------------------------------------------------------------- */
-    initAsHost(competitionPack, roomCode = DEFAULT_ROOM_CODE) {
+    async initAsHost(competitionPack, roomCode = DEFAULT_ROOM_CODE) {
       this.isHost = true;
       this.competitionPack = competitionPack;
       this.roomCode = (roomCode || DEFAULT_ROOM_CODE).toUpperCase().trim();
       this.publicState.roomCode = this.roomCode;
+
+      const backend = await this.checkBackend();
+      if (backend) {
+        this.connectBackendSSE();
+        this.setConnectionStatus("CONNECTED_BACKEND");
+      } else {
+        this.initPeerAsHost(this.roomCode);
+      }
 
       // Restore saved host state if available
       const savedState = localStorage.getItem(STORAGE_PREFIX + "host_state");
@@ -377,7 +442,6 @@
         try { this.teams = JSON.parse(savedTeams); } catch (e) {}
       }
 
-      this.initPeerAsHost(this.roomCode);
       this.broadcastState();
     }
 
@@ -686,22 +750,45 @@
     /* ----------------------------------------------------------------------
        PARTICIPANT / TEAM ENGINE
        ---------------------------------------------------------------------- */
-    initAsParticipant(roomCode, teamName, savedToken = null) {
+    async initAsParticipant(roomCode, teamName, savedToken = null) {
       this.isHost = false;
       this.roomCode = (roomCode || DEFAULT_ROOM_CODE).toUpperCase().trim();
       this.currentTeamName = (teamName || "").trim();
       this.currentTeamId = savedToken || ("team_" + Math.random().toString(36).substr(2, 9));
 
-      // Connect WebRTC peer to host
-      this.initPeerAsClient(this.roomCode, false);
-
-      // Request join from host
-      this.sendToHost({
-        type: "TEAM_JOIN",
-        teamId: this.currentTeamId,
-        teamName: this.currentTeamName,
-        roomCode: this.roomCode
-      });
+      const backend = await this.checkBackend();
+      if (backend) {
+        this.connectBackendSSE();
+        this.setConnectionStatus("CONNECTED_BACKEND");
+        try {
+          const res = await fetch(`${this.backendUrl}/api/player/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: this.currentTeamName,
+              roomCode: this.roomCode
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.player) {
+              this.currentTeamId = data.player.id;
+              this.emit("teamUpdate", data.player);
+            }
+          }
+        } catch (e) {
+          console.warn("Backend join error:", e);
+        }
+      } else {
+        // Fall back to WebRTC Peer relay
+        this.initPeerAsClient(this.roomCode, false);
+        this.sendToHost({
+          type: "TEAM_JOIN",
+          teamId: this.currentTeamId,
+          teamName: this.currentTeamName,
+          roomCode: this.roomCode
+        });
+      }
 
       // Load cached local state if available
       const raw = localStorage.getItem(STORAGE_PREFIX + "state");
@@ -710,11 +797,18 @@
       }
     }
 
-    initAsProjector(roomCode = DEFAULT_ROOM_CODE) {
+    async initAsProjector(roomCode = DEFAULT_ROOM_CODE) {
       this.isHost = false;
       this.isProjector = true;
       this.roomCode = (roomCode || DEFAULT_ROOM_CODE).toUpperCase().trim();
-      this.initPeerAsClient(this.roomCode, true);
+
+      const backend = await this.checkBackend();
+      if (backend) {
+        this.connectBackendSSE();
+        this.setConnectionStatus("CONNECTED_BACKEND");
+      } else {
+        this.initPeerAsClient(this.roomCode, true);
+      }
 
       const raw = localStorage.getItem(STORAGE_PREFIX + "state");
       if (raw) {
@@ -723,7 +817,7 @@
     }
 
     // Submit team answer with client-side checks and network delivery
-    submitAnswer(choice) {
+    async submitAnswer(choice) {
       if (this.publicState.status !== "QUESTION") {
         return { success: false, error: "Submissions are currently closed." };
       }
@@ -735,6 +829,27 @@
       const validChoice = (q.options || []).some(o => o.id === choice);
       if (!validChoice) {
         return { success: false, error: "Invalid option selected." };
+      }
+
+      if (this.backendActive && this.backendUrl) {
+        try {
+          const res = await fetch(`${this.backendUrl}/api/player/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              playerId: this.currentTeamId,
+              questionId: q.id,
+              choice: choice
+            })
+          });
+          const json = await res.json();
+          if (res.ok && json.success) {
+            return { success: true };
+          }
+          return { success: false, error: json.error || "Submission rejected by backend" };
+        } catch (e) {
+          console.warn("Backend submit error, falling back to relay:", e);
+        }
       }
 
       this.sendToHost({
@@ -749,13 +864,33 @@
     }
 
     // Request paid hint (-25 XP)
-    purchaseHint() {
+    async purchaseHint() {
       if (this.publicState.status !== "QUESTION") {
         return { success: false, error: "Hints can only be unlocked while question is active." };
       }
       const q = this.publicState.currentQuestion;
       if (!q || !q.hintAvailable) {
         return { success: false, error: "No hint available for this question." };
+      }
+
+      if (this.backendActive && this.backendUrl) {
+        try {
+          const res = await fetch(`${this.backendUrl}/api/player/hint`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              playerId: this.currentTeamId,
+              questionId: q.id
+            })
+          });
+          const json = await res.json();
+          if (res.ok && json.success) {
+            return { success: true, hint: json.hint };
+          }
+          return { success: false, error: json.error || "Hint purchase rejected by backend" };
+        } catch (e) {
+          console.warn("Backend hint error, falling back to relay:", e);
+        }
       }
 
       this.sendToHost({

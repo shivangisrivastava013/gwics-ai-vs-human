@@ -38,14 +38,20 @@
     const text = document.getElementById("stageConnText");
     if (!badge || !text) return;
 
-    badge.className = `stage-conn-badge ${status.toLowerCase()}`;
-    if (status === "CONNECTED") {
-      text.textContent = "Synced";
+    if (status === "CONNECTED_BACKEND") {
+      badge.className = "stage-conn-badge connected authoritative";
+      text.textContent = "Synced (Backend)";
+    } else if (status === "CONNECTED_P2P" || status === "CONNECTED") {
+      badge.className = "stage-conn-badge connected p2p";
+      text.textContent = "Synced (P2P)";
     } else if (status === "CONNECTING") {
+      badge.className = "stage-conn-badge connecting";
       text.textContent = "Connecting...";
     } else if (status === "RECONNECTING") {
+      badge.className = "stage-conn-badge connecting";
       text.textContent = "Reconnecting...";
     } else {
+      badge.className = "stage-conn-badge offline";
       text.textContent = "Local";
     }
   }
@@ -108,7 +114,7 @@
     const audioStatus = document.getElementById("stageAudioStatus");
 
     // Pause audio when returning to lobby or showing leaderboard
-    if (["LOBBY", "RESULTS", "VOIDED", "REVEALED"].includes(state.status)) {
+    if (["LOBBY", "RESULTS", "ROUND_STANDINGS", "COMPLETED", "VOIDED", "REVEALED"].includes(state.status)) {
       if (audioPlayer && !audioPlayer.paused) {
         audioPlayer.pause();
       }
@@ -127,15 +133,37 @@
       return;
     }
 
-    // 2. Leaderboard View
-    if (state.status === "RESULTS") {
+    // 2. Interim Round Standings View
+    if (state.status === "ROUND_STANDINGS" || state.status === "RESULTS") {
       lobbyView.style.display = "none";
       questionView.style.display = "none";
       revealOverlay.style.display = "none";
       voidOverlay.style.display = "none";
       leaderboardView.style.display = "flex";
-      if (roundLabel) roundLabel.textContent = "Leaderboard Standings";
-      renderLeaderboard(state.leaderboard || []);
+
+      const head = document.getElementById("stageLeaderboardHead");
+      const sub = document.getElementById("stageLeaderboardSub");
+      if (head) head.textContent = `🏆 Current Standings · Round ${state.roundNum || 1} Complete`;
+      if (sub) sub.textContent = `Scores updated after Round ${state.roundNum || 1}. Look at how human instincts rank!`;
+      if (roundLabel) roundLabel.textContent = `Interim Standings · Round ${state.roundNum || 1}`;
+      renderLeaderboard(state.leaderboard || [], false);
+      return;
+    }
+
+    // 3. Final Championship Results
+    if (state.status === "COMPLETED") {
+      lobbyView.style.display = "none";
+      questionView.style.display = "none";
+      revealOverlay.style.display = "none";
+      voidOverlay.style.display = "none";
+      leaderboardView.style.display = "flex";
+
+      const head = document.getElementById("stageLeaderboardHead");
+      const sub = document.getElementById("stageLeaderboardSub");
+      if (head) head.innerHTML = `👑 Final Results · Showdown Complete!`;
+      if (sub) sub.textContent = `Congratulations to our top human champions! Outsmarted the bots.`;
+      if (roundLabel) roundLabel.textContent = "Final Results · Game Over";
+      renderLeaderboard(state.leaderboard || [], true);
       return;
     }
 
@@ -232,7 +260,7 @@
     }
   }
 
-  function renderLeaderboard(board) {
+  function renderLeaderboard(board, isFinal = false) {
     const list = document.getElementById("stageLeaderboardList");
     if (!list) return;
 
@@ -250,7 +278,14 @@
       const rank = document.createElement("span");
       rank.style.fontFamily = "var(--font-mono)";
       rank.style.color = "var(--gold-400)";
-      rank.textContent = `#${idx + 1}`;
+      if (isFinal) {
+        if (idx === 0) rank.textContent = "🥇 #1 Champion";
+        else if (idx === 1) rank.textContent = "🥈 #2 Runner-Up";
+        else if (idx === 2) rank.textContent = "🥉 #3 Third Place";
+        else rank.textContent = `#${idx + 1}`;
+      } else {
+        rank.textContent = `#${idx + 1}`;
+      }
 
       const name = document.createElement("span");
       name.textContent = t.teamName;

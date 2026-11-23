@@ -70,15 +70,21 @@
     const text = document.getElementById("participantConnText");
     if (!badge || !text) return;
 
-    badge.className = `connection-badge ${status.toLowerCase()}`;
-    if (status === "CONNECTED") {
-      text.textContent = "Connected";
+    if (status === "CONNECTED_BACKEND") {
+      badge.className = "connection-badge connected authoritative";
+      text.textContent = "🟢 Backend (Authoritative)";
+    } else if (status === "CONNECTED_P2P" || status === "CONNECTED") {
+      badge.className = "connection-badge connected p2p";
+      text.textContent = "🟡 Mode: P2P Relay";
     } else if (status === "CONNECTING") {
+      badge.className = "connection-badge connecting";
       text.textContent = "Connecting...";
     } else if (status === "RECONNECTING") {
+      badge.className = "connection-badge connecting";
       text.textContent = "Reconnecting...";
     } else {
-      text.textContent = "Offline";
+      badge.className = "connection-badge offline";
+      text.textContent = "Offline / Local";
     }
   }
 

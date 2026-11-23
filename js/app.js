@@ -44,35 +44,50 @@
     const playerContainer = document.getElementById("appModePlayer");
     const organizerContainer = document.getElementById("appModeOrganizer");
     const presentationContainer = document.getElementById("appModePresentation");
+    const drawer = document.getElementById("hostPanelDrawer");
+    const toggleBtn = document.getElementById("btnToggleHostDrawer");
 
     if (!playerContainer || !organizerContainer || !presentationContainer) return;
 
     if (mode === "presentation") {
       document.body.className = "mode-presentation";
       playerContainer.style.display = "none";
-      organizerContainer.style.display = "none";
+      if (drawer) drawer.classList.remove("open");
       presentationContainer.style.display = "grid";
 
       if (window.GWICS_Projector && typeof window.GWICS_Projector.init === "function") {
         window.GWICS_Projector.init();
       }
     } else if (mode === "organizer") {
-      document.body.className = "mode-organizer";
-      playerContainer.style.display = "none";
+      document.body.className = "mode-player";
       presentationContainer.style.display = "none";
+      playerContainer.style.display = "block";
+      if (drawer) {
+        drawer.classList.add("open");
+      }
+      if (toggleBtn) toggleBtn.classList.add("active");
       organizerContainer.style.display = "block";
 
+      if (window.GWICS_Participant && typeof window.GWICS_Participant.init === "function") {
+        window.GWICS_Participant.init();
+      }
       if (window.GWICS_Host && typeof window.GWICS_Host.init === "function") {
         window.GWICS_Host.init();
       }
     } else {
       document.body.className = "mode-player";
-      organizerContainer.style.display = "none";
       presentationContainer.style.display = "none";
       playerContainer.style.display = "block";
+      if (drawer) {
+        drawer.classList.remove("open");
+      }
+      if (toggleBtn) toggleBtn.classList.remove("active");
 
       if (window.GWICS_Participant && typeof window.GWICS_Participant.init === "function") {
         window.GWICS_Participant.init();
+      }
+      if (window.GWICS_Host && typeof window.GWICS_Host.init === "function") {
+        window.GWICS_Host.init();
       }
     }
   }

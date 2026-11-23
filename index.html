@@ -112,6 +112,12 @@
           <span>⚡</span>
           <span id="headerXpVal">100 XP</span>
         </div>
+
+        <!-- Host Controls Button -->
+        <button type="button" class="btn-host-toggle" id="btnToggleHostDrawer" title="Unlock Host Mission Control">
+          <span>⚙️</span>
+          <span>Host Panel</span>
+        </button>
       </div>
     </header>
 
@@ -406,82 +412,87 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> <!-- #appModePlayer -->
 
 
   <!-- ======================================================================
-       ROLE-BASED VIEW 2: ORGANIZER MODE (Protected Mission Control)
+       PRIVATE HOST PANEL (Slide-Out Drawer on Main Game Page)
        ====================================================================== -->
-  <div id="appModeOrganizer" class="app-mode-container" style="display:none;">
-    
-    <!-- Top Host Navigation -->
-    <header class="app-header">
-      <div class="brand-badge">
-        <img src="assets/media/gwics_logo.png" alt="GWiCS" class="brand-logo" style="width:38px; height:38px; padding:2px; margin-right:8px;">
-        <div>
-          <div class="brand-title">
-            <span class="gold">HOST</span> DASHBOARD
-          </div>
-          <span class="brand-sub">GWiCS Showdown Controller</span>
-        </div>
-      </div>
-
-      <div style="display:flex; align-items:center; gap:10px;">
-        <div class="connection-badge connecting" id="hostConnBadge">
-          <span>●</span> <span id="hostConnText">Initializing...</span>
-        </div>
-        <button class="btn-host-action" id="btnHostPresent" style="background:var(--gold-400); color:#000; font-weight:700; padding:6px 16px; font-size:12px; cursor:pointer;" title="Launch Audience Presentation Screen in New Window">
-          📺 Present ↗
-        </button>
-        <a href="?mode=player" target="_blank" class="btn-host-action" style="padding:6px 14px; font-size:12px; text-decoration:none;">
-          📱 Player View ↗
-        </a>
-        <button class="btn-host-action" id="btnHostSignOut" style="padding:6px 12px; font-size:12px; color:var(--text-muted);" title="Sign out of Host Mission Control">
-          🔒 Sign Out
-        </button>
-      </div>
-    </header>
-
-    <!-- AUTHENTICATION & PACK LOADER GATE -->
-    <div id="viewHostGate">
-      <div class="host-gate-card">
-        <div style="font-size:40px; margin-bottom:12px;">🔐</div>
-        <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:8px;">Organizer Mission Control</h2>
-        <p style="color:var(--text-muted); font-size:13px; line-height:1.5; margin-bottom:24px;">
-          Enter your organizer credential and load the local <strong>competition_pack.json</strong> from your organizer vault. Answers remain strictly on your laptop.
-        </p>
-
-        <form id="hostAuthForm">
-          <div class="form-group" style="text-align:left; margin-bottom:16px;">
-            <label class="form-label" for="hostRoomInput">Game PIN / Room Code</label>
-            <input type="text" class="form-input" id="hostRoomInput" value="BOTORNOT" maxlength="12" required>
-          </div>
-
-          <div class="form-group" style="text-align:left; margin-bottom:16px;">
-            <label class="form-label" for="hostPinInput">Organizer Credential</label>
-            <input type="password" class="form-input" id="hostPinInput" placeholder="Enter Organizer Passcode" required>
-          </div>
-
-          <div class="form-group" style="text-align:left; margin-bottom:20px;">
-            <label class="form-label" for="packFileInput">Local Competition Pack (.json)</label>
-            <input type="file" id="packFileInput" accept=".json" class="form-input" style="padding:8px; font-size:12px;" required>
-            <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
-              Select <code>local_organizer_vault/competition_pack.json</code>
+  <div id="hostPanelDrawer" class="host-drawer-overlay">
+    <div class="host-drawer-container">
+      <div id="appModeOrganizer" class="app-mode-container">
+        
+        <!-- Top Host Navigation -->
+        <header class="app-header host-drawer-header">
+          <div class="brand-badge">
+            <img src="assets/media/gwics_logo.png" alt="GWiCS" class="brand-logo" style="width:38px; height:38px; padding:2px; margin-right:8px;">
+            <div>
+              <div class="brand-title">
+                <span class="gold">HOST</span> DASHBOARD
+              </div>
+              <span class="brand-sub">GWiCS Showdown Controller</span>
             </div>
           </div>
 
-          <button type="submit" class="btn-join" style="width:100%; margin-top:0;">
-            Unlock Mission Control & Start
-          </button>
-        </form>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div class="connection-badge connecting" id="hostConnBadge">
+              <span>●</span> <span id="hostConnText">Initializing...</span>
+            </div>
+            <button class="btn-host-action" id="btnHostPresent" style="background:var(--gold-400); color:#000; font-weight:700; padding:6px 16px; font-size:12px; cursor:pointer;" title="Launch Audience Presentation Screen in New Window">
+              📺 Connect Projector ↗
+            </button>
+            <button class="btn-host-action" id="btnHostSignOut" style="padding:6px 12px; font-size:12px; color:var(--text-muted);" title="Sign out of Host Mission Control">
+              🔒 Sign Out
+            </button>
+            <button type="button" class="host-drawer-close" id="btnHostCloseDrawer" title="Close Panel (Session remains active)">
+              ✕ Close Panel
+            </button>
+          </div>
+        </header>
 
-        <div style="margin-top:20px;">
-          <a href="?mode=player" style="font-family:var(--font-mono); font-size:12px; color:var(--text-dim); text-decoration:none;">
-            ← Return to Player Join Screen
-          </a>
+        <!-- AUTHENTICATION & PACK LOADER GATE -->
+        <div id="viewHostGate">
+          <div class="host-gate-card">
+            <div style="font-size:40px; margin-bottom:12px;">🔐</div>
+            <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:8px;">Organizer Mission Control</h2>
+            <p style="color:var(--text-muted); font-size:13px; line-height:1.5; margin-bottom:20px;">
+              Enter your organizer credential and load the local <strong>competition_pack.json</strong> from your organizer vault. Answers remain strictly on your laptop.
+            </p>
+
+            <form id="hostAuthForm">
+              <div class="form-group" style="text-align:left; margin-bottom:14px;">
+                <label class="form-label" for="hostRoomInput">Game PIN / Room Code</label>
+                <input type="text" class="form-input" id="hostRoomInput" value="BOTORNOT" maxlength="12" required>
+              </div>
+
+              <div class="form-group" style="text-align:left; margin-bottom:14px;">
+                <label class="form-label" for="hostPinInput">Organizer Credential</label>
+                <input type="password" class="form-input" id="hostPinInput" placeholder="Enter Organizer Passcode" required>
+              </div>
+
+              <div class="form-group" style="text-align:left; margin-bottom:16px;">
+                <label class="form-label" for="packFileInput">Local Competition Pack (.json)</label>
+                <input type="file" id="packFileInput" accept=".json" class="form-input" style="padding:8px; font-size:12px;" required>
+                <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+                  Select <code>local_organizer_vault/competition_pack.json</code>
+                </div>
+              </div>
+
+              <!-- Automated Pre-Flight Asset Status Report -->
+              <div id="hostPreflightReport" style="display:none; margin-bottom:16px;"></div>
+
+              <button type="submit" class="btn-join" style="width:100%; margin-top:0;">
+                Unlock Mission Control & Start
+              </button>
+            </form>
+
+            <div style="margin-top:16px;">
+              <button type="button" class="btn-change-team" id="btnGateReturn">
+                ← Return to Player View
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
 
     <!-- HOST MISSION CONTROL DASHBOARD (Protected) -->
     <div class="host-layout" id="viewHostDashboard" style="display:none;">
@@ -498,8 +509,12 @@
           <div style="font-family:var(--font-mono); font-size:24px; font-weight:800; color:#FFFFFF; margin-bottom:4px;" id="hostRoomCodeLabel">
             BOTORNOT
           </div>
-          <div style="font-size:13px; color:var(--text-muted);">
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">
             <span id="hostTeamsCountLabel">0</span> Players Connected
+          </div>
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); border-top:1px solid var(--charcoal-750); padding-top:6px;">
+            Session: <span id="hostSessionIdLabel" style="color:var(--gold-400);">-</span><br>
+            Pack Hash: <span id="hostPackHashLabel" style="color:var(--cyan-400);">-</span>
           </div>
         </div>
 
@@ -575,7 +590,10 @@
               ⚡ Reveal Answer & Tell
             </button>
             <button class="btn-host-action" id="btnHostShowLeaderboard">
-              🏆 Show Leaderboard
+              🏆 Round Standings
+            </button>
+            <button class="btn-host-action" id="btnHostFinalResults">
+              👑 Final Results
             </button>
             <button class="btn-host-action" id="btnHostVoid" style="color:var(--color-danger); border-color:var(--color-danger);">
               ✕ Void Question & Refund Hints
@@ -718,7 +736,9 @@
         </form>
       </div>
     </div>
-  </div>
+  </div> <!-- #appModeOrganizer -->
+    </div> <!-- .host-drawer-container -->
+  </div> <!-- #hostPanelDrawer -->
 
 
   <!-- ======================================================================
@@ -847,9 +867,12 @@
 
       <!-- 5. LEADERBOARD VIEW -->
       <div class="projector-lobby" id="stageLeaderboardView" style="display:none;">
-        <h2 class="leaderboard-title">
+        <h2 class="leaderboard-title" id="stageLeaderboardHead">
           🏆 Official Standings
         </h2>
+        <p id="stageLeaderboardSub" style="color:var(--text-muted); font-size:clamp(13px, 1.6vh, 18px); margin-bottom:1.5vh;">
+          Live standings for BOT OR NOT?
+        </p>
         <div class="stage-leaderboard-grid" id="stageLeaderboardList">
           <!-- Dynamically populated -->
         </div>
