@@ -333,6 +333,17 @@
 
       if (data.type === "STATE_SYNC") {
         this.onRemoteStateUpdate(data.state);
+      } else if (data.type === "SESSION_RESET") {
+        try {
+          localStorage.removeItem("gwics_captain_session");
+          localStorage.removeItem("botornot_player_session");
+          sessionStorage.removeItem("gwics_captain_session");
+          sessionStorage.removeItem("botornot_player_session");
+        } catch (e) {}
+        this.currentTeamId = null;
+        this.currentTeamName = "";
+        this.onRemoteStateUpdate(data.state);
+        this.emit("eventMessage", data);
       } else if (data.type === "TEAM_PRIVATE_UPDATE") {
         if (data.team && data.team.id === this.currentTeamId) {
           this.emit("teamUpdate", data.team);
@@ -372,6 +383,41 @@
 
     setCompetitionPack(pack) {
       this.competitionPack = pack;
+    }
+
+    resetSession() {
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+      }
+
+      this.publicState = createInitialPublicState();
+      this.publicState.roomCode = this.roomCode;
+      this.teams = {};
+
+      try {
+        localStorage.removeItem(STORAGE_PREFIX + "host_state");
+        localStorage.removeItem(STORAGE_PREFIX + "host_teams");
+        localStorage.removeItem(STORAGE_PREFIX + "state");
+      } catch (e) {}
+
+      const resetPayload = {
+        type: "SESSION_RESET",
+        state: this.publicState
+      };
+
+      if (this.channel) {
+        try { this.channel.postMessage(resetPayload); } catch (e) {}
+      }
+
+      for (const peerId in this.peerConnections) {
+        const conn = this.peerConnections[peerId];
+        if (conn && conn.open) {
+          try { conn.send(resetPayload); } catch (e) {}
+        }
+      }
+
+      this.broadcastState();
     }
 
     broadcastState() {

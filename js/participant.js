@@ -458,6 +458,19 @@
   function handleNetworkEvent(event) {
     if (!event) return;
 
+    if (event.type === "SESSION_RESET") {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem("botornot_player_session");
+      sessionStorage.removeItem(SESSION_KEY);
+      sessionStorage.removeItem("botornot_player_session");
+      myTeam = { id: null, name: "", xp: 100, answers: {}, unlockedHints: {}, history: [] };
+      document.getElementById("viewInGame").style.display = "none";
+      document.getElementById("headerXpPill").style.display = "none";
+      document.getElementById("viewEntrance").style.display = "block";
+      alert("The host has reset the game session. You are now at the fresh lobby.");
+      return;
+    }
+
     if (event.type === "SUBMIT_ACK") {
       isSubmitting = false;
       if (event.status === "ACCEPTED") {

@@ -6,6 +6,26 @@
 (function () {
   "use strict";
 
+  function clearAllGameStorage() {
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && (k.startsWith("gwics_") || k.startsWith("botornot_"))) keys.push(k);
+      }
+      keys.forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
+
+    try {
+      const skeys = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const k = sessionStorage.key(i);
+        if (k && (k.startsWith("gwics_") || k.startsWith("botornot_"))) skeys.push(k);
+      }
+      skeys.forEach(k => sessionStorage.removeItem(k));
+    } catch (e) {}
+  }
+
   function getModeFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const modeParam = (params.get("mode") || "").toLowerCase().trim();
@@ -76,6 +96,18 @@
   }
 
   function init() {
+    const params = new URLSearchParams(window.location.search);
+    const hash = (window.location.hash || "").toLowerCase();
+
+    // Reset URL trigger: ?reset=true, ?reset=1, or #reset
+    if (params.get("reset") === "1" || params.get("reset") === "true" || hash === "#reset") {
+      clearAllGameStorage();
+      params.delete("reset");
+      const cleanQuery = params.toString();
+      const cleanUrl = window.location.pathname + (cleanQuery ? "?" + cleanQuery : "");
+      window.history.replaceState({}, "", cleanUrl);
+    }
+
     const currentMode = getModeFromUrl();
     setAppMode(currentMode);
 
@@ -91,6 +123,7 @@
     getMode: getModeFromUrl,
     setMode: setAppMode,
     switchMode: switchMode,
+    resetGame: clearAllGameStorage,
     init: init
   };
 
