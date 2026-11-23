@@ -105,13 +105,23 @@
 
   // Prepares round 4 items with neutral options and randomized AI contender assignment
   function preparePack(pack) {
+    if (!pack._questionOrderRandomized) {
+      for (const round of pack.rounds) {
+        if (round.roundNum === 4 || !Array.isArray(round.items)) continue;
+        for (let i = round.items.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [round.items[i], round.items[j]] = [round.items[j], round.items[i]];
+        }
+      }
+      pack._questionOrderRandomized = true;
+    }
     const r4 = pack.rounds.find(r => r.roundNum === 4);
     if (r4 && (!r4.items || !r4.items.length) && r4.prompts) {
       const slots = ["A", "B", "C"];
 
       r4.items = r4.prompts.map((p, i) => {
         // Rotate and randomize AI slot across duels (e.g. A, B, or C) so it is never predictable!
-        const aiSlot = slots[i % slots.length];
+        const aiSlot = slots[Math.floor(Math.random() * slots.length)];
         const humanSlots = slots.filter(s => s !== aiSlot);
 
         return {
@@ -262,6 +272,21 @@
     const effectiveTime = it.timeLimit || round.timeLimit || 45;
     document.getElementById("hostTimerVal").textContent = `${effectiveTime}s`;
 
+    const player = document.getElementById("hostAudioPlayer");
+    const panel = document.getElementById("hostAudioPanel");
+    player.pause();
+    panel.hidden = it.type !== "audio";
+    if (it.type === "audio") {
+      const url = it.audioUrl || it.media || "";
+      player.src = url.replace(/\\/g, "/");
+      player.load();
+      const error = document.getElementById("hostAudioError");
+      error.textContent = url ? "Preview every clip before opening the round." : "Missing audio URL in this question pack.";
+      player.onerror = () => { error.textContent = "Cannot load this recording. Check the question's audio URL before launch."; };
+    } else {
+      player.removeAttribute("src"); player.load();
+    }
+
     // Populate Secret Host Answer Key & Tell
     document.getElementById("hostSecretAnswer").textContent = `Answer: ${it.ans}`;
     document.getElementById("hostSecretSource").textContent = it.source ? `Verified: ${it.source}` : "Secret Organizer Key";
@@ -393,7 +418,7 @@
     };
 
     btnVoid.onclick = () => {
-      if (confirm("Void this question? Submissions will be locked, and any team that purchased a hint for this question will receive a full 25 XP refund.")) {
+      if (confirm("Void this question? Submissions will be locked, and any player who purchased a hint for this question will receive a full 25 XP refund.")) {
         Engine.voidQuestion("Question voided by host");
         document.getElementById("hostSubmissionStatusText").textContent = "Question marked VOID. All hints refunded.";
       }
@@ -402,7 +427,7 @@
     document.getElementById("btnRefreshTeams").onclick = renderTeams;
 
     document.getElementById("btnResetAll").onclick = () => {
-      if (confirm("Reset the entire game session? This clears all team scores and submissions.")) {
+      if (confirm("Reset the entire game session? This clears all player scores and submissions.")) {
         localStorage.clear();
         sessionStorage.clear();
         location.reload();
@@ -426,7 +451,7 @@
 
     const total = state.totalTeams || 0;
     const sub = state.submittedCount || 0;
-    document.getElementById("hostSubmissionsCount").textContent = `${sub} / ${total} Teams`;
+    document.getElementById("hostSubmissionsCount").textContent = `${sub} / ${total} Players`;
     document.getElementById("hostTeamsCountLabel").textContent = total;
 
     renderTeams();
@@ -438,7 +463,7 @@
 
     const teams = Object.values(Engine.teams || {}).sort((a, b) => b.xp - a.xp);
     if (!teams.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding:20px;">No teams joined yet. Waiting for table captains...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-dim); padding:20px;">No players joined yet. Waiting for participants...</td></tr>`;
       return;
     }
 
@@ -560,7 +585,7 @@
     btn.onclick = () => {
       const teams = Object.values(Engine.teams || {});
       if (!teams.length) {
-        alert("No teams to export.");
+        alert("No players to export.");
         return;
       }
 

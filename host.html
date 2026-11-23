@@ -133,7 +133,7 @@
       font-weight: 700;
     }
 
-    /* Teams & Leaderboard Table */
+    /* Players & Leaderboard Table */
     .host-teams-table {
       width: 100%;
       border-collapse: collapse;
@@ -274,7 +274,7 @@
           BOTORNOT
         </div>
         <div style="font-size:13px; color:var(--text-muted);">
-          <span id="hostTeamsCountLabel">0</span> Teams Connected
+          <span id="hostTeamsCountLabel">0</span> Players Connected
         </div>
       </div>
 
@@ -360,14 +360,14 @@
         <!-- Submissions Monitor -->
         <div style="display:flex; align-items:center; justify-content:space-between; background:var(--charcoal-900); padding:12px 16px; border-radius:var(--radius-md); margin-bottom:20px; font-family:var(--font-mono); font-size:13px;">
           <div>
-            Submissions: <strong style="color:var(--gold-400);" id="hostSubmissionsCount">0 / 0 Teams</strong>
+            Submissions: <strong style="color:var(--gold-400);" id="hostSubmissionsCount">0 / 0 Players</strong>
           </div>
           <div id="hostSubmissionStatusText" style="color:var(--text-dim);">Ready to launch</div>
         </div>
 
         <!-- Secret Answer & Tell Box (Visible ONLY to Host) -->
         <div class="host-secret-vault-box" id="hostSecretVault">
-          <div class="host-secret-badge">SECRET ANSWER KEY (HOST LAPTOP ONLY)</div>
+          <div id="hostAudioPanel" hidden><p>Preview / play current audio through the room speakers</p><audio id="hostAudioPlayer" controls preload="metadata" style="width:100%"></audio><p id="hostAudioError" role="status"></p></div><div class="host-secret-badge">SECRET ANSWER KEY (HOST LAPTOP ONLY)</div>
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
             <span style="font-family:var(--font-display); font-size:18px; font-weight:800; color:#FFFFFF;" id="hostSecretAnswer">
               Answer: AI
@@ -428,7 +428,7 @@
       <!-- Connected Teams & Live Leaderboard -->
       <div class="question-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <h3 style="font-family:var(--font-display); font-size:18px;">Connected Teams & XP Leaderboard</h3>
+          <h3 style="font-family:var(--font-display); font-size:18px;">Connected Players & XP Leaderboard</h3>
           <button class="btn-host-action" id="btnRefreshTeams" style="padding:4px 12px; font-size:11px;">Refresh</button>
         </div>
 
@@ -436,7 +436,7 @@
           <thead>
             <tr>
               <th>Rank</th>
-              <th>Team Name</th>
+              <th>Display Name</th>
               <th>Current Answer</th>
               <th>XP Balance</th>
               <th>Hint Used</th>
