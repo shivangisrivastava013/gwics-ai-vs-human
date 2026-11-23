@@ -52,7 +52,7 @@
       color: #FFFFFF;
     }
 
-    /* Change Team Link */
+    /* Leave Game Link */
     .btn-change-team {
       background: transparent;
       border: none;
@@ -72,7 +72,7 @@
 
   <!-- Top App Navigation -->
   <header class="app-header">
-    <div class="brand-badge">
+    <div class="brand-badge"><img src="https://se-images.campuslabs.com/clink/images/7b0cc984-408e-4d90-b153-1840076f9a417af51e2a-de63-4d11-8624-98c1f572c9b9.png" alt="Graduate Women in Computing Society" style="width:56px;height:56px;object-fit:contain;background:white;border-radius:50%;padding:3px;">
       <div class="brand-title">
         <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
       </div>
@@ -122,7 +122,7 @@
       <!-- Playful Followup Revealed when checked -->
       <div class="robot-followup" id="robotFollowup">
         <strong>But can you spot one?</strong>
-        <span>Put your human instincts to the test. Form a table team and join the live battle.</span>
+        <span>Put your human instincts to the test. Join the live challenge. Your instincts. Your score.</span>
       </div>
 
       <!-- Join Form -->
@@ -133,8 +133,8 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="teamNameInput">Team Name</label>
-          <input type="text" class="form-input" id="teamNameInput" placeholder="e.g., Table 4 · Turing's Heirs" maxlength="32" required>
+          <label class="form-label" for="teamNameInput">Display Name</label>
+          <input type="text" class="form-input" id="teamNameInput" placeholder="Your name or nickname" maxlength="32" required>
         </div>
 
         <button type="submit" class="btn-join">
@@ -147,7 +147,7 @@
       <div class="entrance-secondary-links">
         <button class="entrance-link" id="btnOpenRules">How to Play</button>
         <button class="entrance-link" id="btnOpenPractice">Practice Sandbox</button>
-        <a href="projector.html" class="entrance-link" style="color:var(--text-dim);" target="_blank">Projector View ↗</a>
+        <a href="host.html" class="entrance-link">Host a game</a>
       </div>
     </section>
 
@@ -161,8 +161,8 @@
         <div>
           <span class="status-round-tag" id="gameRoundTag">Round 1</span>
           <div style="display:flex; align-items:center; gap:8px;">
-            <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Team: Loading...</div>
-            <button class="btn-change-team" id="btnChangeTeam">Change Team</button>
+            <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Player: Loading...</div>
+            <button class="btn-change-team" id="btnChangeTeam">Leave Game</button>
           </div>
         </div>
         <div class="status-timer-pill" id="gameTimerPill">
@@ -348,10 +348,10 @@
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Rules & Scoring</div>
       <h3 id="rulesModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:12px;">How The Showdown Works</h3>
       <ul style="padding-left:18px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:10px; line-height:1.6;">
-        <li><strong>One Captain Submits:</strong> One phone per table submits the team's answer. Everyone else discusses at the table and watches the projector.</li>
-        <li><strong>XP Economy:</strong> Every team starts with <strong>100 XP</strong>. Correct answers award <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
-        <li><strong>Paid Hints:</strong> You can unlock 1 hint per question for <strong>25 XP</strong>. The hint is private to your team.</li>
-        <li><strong>Locked Submissions:</strong> Once your captain locks in your choice, your answer is sealed until the host reveals the verdict.</li>
+        <li><strong>Individual Play:</strong> Each player joins on their own phone and submits their own answer.</li>
+        <li><strong>XP Economy:</strong> Every player starts with <strong>100 XP</strong>. Correct answers award <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
+        <li><strong>Paid Hints:</strong> You can unlock 1 hint per question for <strong>25 XP</strong>. The hint is private to you.</li>
+        <li><strong>Locked Submissions:</strong> Once you lock in your choice, your answer is sealed until the host reveals the verdict.</li>
       </ul>
     </div>
   </div>
@@ -360,7 +360,7 @@
   <div class="modal-overlay" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
     <div class="modal-dialog">
       <button class="modal-close" id="btnCloseHistory" aria-label="Close score history">✕</button>
-      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Team Record</div>
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Your Record</div>
       <h3 id="historyModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">XP Balance & History</h3>
       <div id="historyList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; font-size:13px;">
         <!-- Populated dynamically -->
@@ -371,13 +371,13 @@
   <!-- 5. Leave / Change Team Confirmation Modal -->
   <div class="modal-overlay" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveModalTitle">
     <div class="modal-dialog">
-      <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave or Switch Team?</h3>
+      <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave the Game?</h3>
       <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
-        Leaving will disconnect your phone from this table team. You can join another team or rejoin later.
+        Your progress stays on this device so you can rejoin with the same identity.
       </p>
       <div style="display:flex; gap:12px;">
         <button class="btn-join" style="flex:1; padding:12px; background:var(--color-danger); border-color:var(--color-danger);" id="btnConfirmLeave">
-          Leave Team
+          Leave Game
         </button>
         <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelLeave">
           Cancel
