@@ -123,23 +123,59 @@
      -------------------------------------------------------------------------- */
   function setupJoinForm() {
     const form = document.getElementById("joinForm");
-    if (!form) return;
+    if (form) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const roomCode = document.getElementById("roomCodeInput").value.trim().toUpperCase() || "BOTORNOT";
+        const teamName = document.getElementById("teamNameInput").value.trim();
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const roomCode = document.getElementById("roomCodeInput").value.trim().toUpperCase() || "BOTORNOT";
-      const teamName = document.getElementById("teamNameInput").value.trim();
+        if (!teamName) return;
 
-      if (!teamName) return;
+        const teamId = "team_" + Math.random().toString(36).substr(2, 9);
+        rejoinSession(roomCode, teamName, teamId);
+      });
+    }
 
-      const teamId = "team_" + Math.random().toString(36).substr(2, 9);
-      rejoinSession(roomCode, teamName, teamId);
-    });
+    const practiceForm = document.getElementById("practiceJoinForm");
+    if (practiceForm) {
+      practiceForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const roomCode = document.getElementById("practiceRoomCodeInput").value.trim().toUpperCase() || "BOTORNOT";
+        const teamName = document.getElementById("practiceTeamNameInput").value.trim();
+
+        if (!teamName) return;
+
+        const teamId = "team_" + Math.random().toString(36).substr(2, 9);
+        rejoinSession(roomCode, teamName, teamId);
+      });
+    }
+
+    const btnBackPrac = document.getElementById("btnBackToPracticeWhileWaiting");
+    if (btnBackPrac) {
+      btnBackPrac.onclick = () => {
+        document.getElementById("viewInGame").style.display = "none";
+        document.getElementById("viewPractice").style.display = "flex";
+        const connectedBadge = document.getElementById("practiceConnectedBadge");
+        if (connectedBadge) {
+          connectedBadge.style.display = "inline-block";
+          connectedBadge.textContent = `🟢 Connected: Room ${myTeam.roomCode || 'BOTORNOT'} (${myTeam.name})`;
+        }
+      };
+    }
+
+    const btnRulesPrac = document.getElementById("btnOpenRulesFromPractice");
+    if (btnRulesPrac) {
+      btnRulesPrac.onclick = () => {
+        const rulesModal = document.getElementById("rulesModal");
+        if (rulesModal) rulesModal.classList.add("open");
+      };
+    }
   }
 
   function rejoinSession(roomCode, teamName, teamId) {
     myTeam.id = teamId;
     myTeam.name = teamName;
+    myTeam.roomCode = roomCode;
 
     // Save session so page refresh preserves player & submissions
     const sessionData = JSON.stringify({
@@ -152,12 +188,12 @@
 
     Engine.initAsParticipant(roomCode, teamName, teamId);
 
-    // Transition view
+    // Transition view to live game
     document.getElementById("viewEntrance").style.display = "none";
     document.getElementById("viewPractice").style.display = "none";
     document.getElementById("viewInGame").style.display = "flex";
     document.getElementById("headerXpPill").style.display = "flex";
-    document.getElementById("gameTeamNameLabel").textContent = `Player: ${teamName}`;
+    document.getElementById("gameTeamNameLabel").textContent = `Player: ${teamName} · Room: ${roomCode}`;
   }
 
   function setupLeaveTeam() {
@@ -179,23 +215,10 @@
         modal.classList.remove("open");
         document.getElementById("viewInGame").style.display = "none";
         document.getElementById("headerXpPill").style.display = "none";
-        document.getElementById("viewEntrance").style.display = "block";
-      };
-    }
-
-    const btnClear = document.getElementById("btnClearMyData");
-    if (btnClear) {
-      btnClear.onclick = () => {
-        if (confirm("Clear all local game history and player data on this device?")) {
-          if (window.GWICS_App && window.GWICS_App.resetGame) {
-            window.GWICS_App.resetGame();
-          } else {
-            localStorage.clear();
-            sessionStorage.clear();
-          }
-          alert("All local data cleared. You are back at the fresh lobby.");
-          location.reload();
-        }
+        document.getElementById("viewPractice").style.display = "flex";
+        document.getElementById("viewEntrance").style.display = "none";
+        const connectedBadge = document.getElementById("practiceConnectedBadge");
+        if (connectedBadge) connectedBadge.style.display = "none";
       };
     }
   }
@@ -232,17 +255,44 @@
       cardLobby.style.display = "block";
       cardActive.style.display = "none";
       if (roundTag) roundTag.textContent = "Lobby";
+      const room = escapeHtml(state.roomCode || myTeam.roomCode || 'BOTORNOT');
+      const playerName = escapeHtml(myTeam.name || 'Player');
       cardLobby.innerHTML = `
         <div style="font-size:40px; margin-bottom:12px;">🎮</div>
-        <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game!</h2>
-        <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 16px;">
-          Starting balance: <strong>100 XP</strong>. Look at the main screen—your name will appear on the audience display.
+        <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in Room: ${room}</h2>
+        <p style="color:var(--text-muted); font-size:14px; max-width:420px; margin:0 auto 16px;">
+          Welcome, <strong>${playerName}</strong>! Starting balance: <strong>100 XP</strong>.<br>
+          The competition has to be started by the host on the presentation stage.
         </p>
-        <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:6px 14px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700);">
-          Watching for the host to launch the first question...
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:8px 16px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700); margin-bottom:20px;">
+          ⏳ Waiting for host to start the game...
+        </div>
+        <div>
+          <button class="btn-option" id="btnBackToPracticeWhileWaiting" style="padding:10px 18px; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+            <span>← Warm up with Practice while waiting</span>
+          </button>
         </div>
       `;
+      const btnBackPrac = document.getElementById("btnBackToPracticeWhileWaiting");
+      if (btnBackPrac) {
+        btnBackPrac.onclick = () => {
+          document.getElementById("viewInGame").style.display = "none";
+          document.getElementById("viewPractice").style.display = "flex";
+          const connectedBadge = document.getElementById("practiceConnectedBadge");
+          if (connectedBadge) {
+            connectedBadge.style.display = "inline-block";
+            connectedBadge.textContent = `🟢 Connected: Room ${room} (${playerName})`;
+          }
+        };
+      }
       return;
+    }
+
+    // If a live question is active and player is joined, ensure in-game screen is displayed
+    if (state.status === "QUESTION" && myTeam.id) {
+      document.getElementById("viewPractice").style.display = "none";
+      document.getElementById("viewEntrance").style.display = "none";
+      document.getElementById("viewInGame").style.display = "flex";
     }
 
     if (state.status === "RESULTS") {
@@ -490,8 +540,11 @@
       myTeam = { id: null, name: "", xp: 100, answers: {}, unlockedHints: {}, history: [] };
       document.getElementById("viewInGame").style.display = "none";
       document.getElementById("headerXpPill").style.display = "none";
-      document.getElementById("viewEntrance").style.display = "block";
-      alert("The host has reset the game session. You are now at the fresh lobby.");
+      document.getElementById("viewPractice").style.display = "flex";
+      document.getElementById("viewEntrance").style.display = "none";
+      const connectedBadge = document.getElementById("practiceConnectedBadge");
+      if (connectedBadge) connectedBadge.style.display = "none";
+      alert("The host has reset the game session. You are now back at the practice problems.");
       return;
     }
 
@@ -708,16 +761,23 @@
       document.getElementById("btnNextPractice").onclick = () => { if (pIdx < PracticeBank.length - 1) { pIdx++; renderPractice(); } };
     }
 
-    btnOpen.onclick = () => {
-      viewEntrance.style.display = "none";
-      viewPractice.style.display = "flex";
-      renderPractice();
-    };
+    if (btnOpen) {
+      btnOpen.onclick = () => {
+        if (viewEntrance) viewEntrance.style.display = "none";
+        viewPractice.style.display = "flex";
+        renderPractice();
+      };
+    }
 
-    btnExit.onclick = () => {
-      viewPractice.style.display = "none";
-      viewEntrance.style.display = "flex";
-    };
+    if (btnExit) {
+      btnExit.onclick = () => {
+        viewPractice.style.display = "none";
+        if (viewEntrance) viewEntrance.style.display = "flex";
+      };
+    }
+
+    // Immediately render practice problems on initial load!
+    renderPractice();
   }
 
   function escapeHtml(str) {

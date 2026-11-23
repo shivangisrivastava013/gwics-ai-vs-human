@@ -124,8 +124,8 @@
     <!-- Main Player Shell -->
     <main class="main-wrapper">
 
-      <!-- ENTRANCE SCREEN -->
-      <section class="entrance-card" id="viewEntrance">
+      <!-- ENTRANCE SCREEN (Hidden by default; site opens directly to Practice Sandbox) -->
+      <section class="entrance-card" id="viewEntrance" style="display:none;">
         <h1 class="entrance-title">
           BOT OR <span style="color:var(--cyan-500)">NOT?</span>
         </h1>
@@ -172,7 +172,6 @@
         <div class="entrance-secondary-links">
           <button class="entrance-link" id="btnOpenRules">How to Play</button>
           <button class="entrance-link" id="btnOpenPractice">Practice Sandbox</button>
-          <button class="entrance-link" id="btnClearMyData" style="color:var(--text-dim);" title="Wipe local player history and starting session">Reset Data</button>
         </div>
 
         <!-- Discrete Organizer Access Link -->
@@ -205,12 +204,17 @@
         <!-- Waiting / Lobby State -->
         <div class="question-card" id="cardLobbyState" style="text-align:center; padding:40px 20px;">
           <div style="font-size:40px; margin-bottom:12px;">🎮</div>
-          <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game!</h2>
-          <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 16px;">
-            Starting balance: <strong>100 XP</strong>. Look at the main screen—your name will appear on the audience display.
+          <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game Room!</h2>
+          <p style="color:var(--text-muted); font-size:14px; max-width:420px; margin:0 auto 16px;">
+            Starting balance: <strong>100 XP</strong>. The competition has to be started by the host on the presentation stage.
           </p>
-          <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:6px 14px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700);">
-            Watching for the host to launch the first question...
+          <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:8px 16px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700); margin-bottom:20px;">
+            ⏳ Waiting for the host to start the game...
+          </div>
+          <div>
+            <button class="btn-option" id="btnBackToPracticeWhileWaiting" style="padding:10px 18px; font-size:13px; display:inline-flex; align-items:center; gap:6px;">
+              <span>← Warm up with Practice while waiting</span>
+            </button>
           </div>
         </div>
 
@@ -324,18 +328,66 @@
         </div>
       </section>
 
-      <!-- PRACTICE SANDBOX -->
-      <section class="game-screen" id="viewPractice" style="display:none;">
-        <div class="status-banner">
+      <!-- PRACTICE SANDBOX (Default initial landing view) -->
+      <section class="game-screen" id="viewPractice" style="display:flex;">
+        <!-- Top Warmup Banner -->
+        <div class="status-banner" style="flex-wrap:wrap; gap:10px;">
           <div>
-            <span class="status-round-tag">Practice Sandbox</span>
-            <div style="font-size:13px; font-weight:700;">Zero-Risk Warmup</div>
+            <span class="status-round-tag" style="color:var(--cyan-400);">Warmup Arena</span>
+            <div style="font-size:16px; font-weight:800; font-family:var(--font-display);">Practice Problems</div>
+            <div style="font-size:12px; color:var(--text-muted);">Test your instincts with sample problems while waiting for the live event!</div>
           </div>
-          <button class="entrance-link" id="btnExitPractice" style="font-size:12px;">← Exit Practice</button>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="entrance-link" id="btnOpenRulesFromPractice" style="font-size:12px;">How to Play</button>
+          </div>
         </div>
 
+        <!-- Live Game Entry Bar: Room Code & Name Input -->
+        <div class="question-card" id="practiceLiveEntryBox" style="border:1.5px solid var(--gold-500); background:linear-gradient(180deg, rgba(229,184,66,0.09) 0%, rgba(10,13,18,0.95) 100%);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:20px;">⚡</span>
+              <div>
+                <h3 style="font-family:var(--font-display); font-size:16px; margin:0; color:var(--gold-400);">Enter Live Competition</h3>
+                <span style="font-size:12px; color:var(--text-muted);">Enter the room code from the main projector</span>
+              </div>
+            </div>
+            <div id="practiceConnectedBadge" style="display:none; font-family:var(--font-mono); font-size:11px; color:var(--color-success); background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); padding:4px 10px; border-radius:var(--radius-pill);">
+              🟢 Connected to Live Room
+            </div>
+          </div>
+
+          <form class="join-form" id="practiceJoinForm" style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+              <div class="form-group" style="flex:1; min-width:140px; margin-bottom:0;">
+                <label class="form-label" for="practiceRoomCodeInput">Game PIN / Room Code</label>
+                <input type="text" class="form-input" id="practiceRoomCodeInput" value="BOTORNOT" maxlength="12" placeholder="e.g. BOTORNOT" required>
+              </div>
+              <div class="form-group" style="flex:2; min-width:180px; margin-bottom:0;">
+                <label class="form-label" for="practiceTeamNameInput">Your Display Name</label>
+                <input type="text" class="form-input" id="practiceTeamNameInput" placeholder="Your name or nickname" maxlength="32" required>
+              </div>
+            </div>
+            <button type="submit" class="btn-join" style="width:100%; justify-content:center; padding:12px;">
+              <span>Enter Game Room</span>
+              <span>🚀</span>
+            </button>
+          </form>
+
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); text-align:center; margin-top:10px;">
+            🔒 The actual game has to be started by the host on the presentation stage.
+          </div>
+        </div>
+
+        <!-- Practice Problem Card (Interactive Question & Explanation) -->
         <div class="question-card" id="practiceContainer">
           <!-- Rendered by js/participant.js using GWICS_PRACTICE_BANK -->
+        </div>
+
+        <!-- Footer Links -->
+        <div style="text-align:center; margin-top:12px; margin-bottom:16px; font-size:12px; color:var(--text-dim);">
+          Presented by Graduate Women in Computing Society (GWiCS) ·
+          <a href="?mode=organizer" class="organizer-access-link" style="font-size:12px; display:inline-flex;">🔐 Organizer Access</a>
         </div>
       </section>
 
