@@ -1,66 +1,67 @@
-// PRACTICE BANK: Dedicated sample questions for attendee practice only
-// These are completely distinct from live competition questions to prevent previews.
+// DEDICATED PRACTICE BANK (Completely distinct from live competition questions)
+// Zero overlap with competition media, literature, or audio.
 window.GWICS_PRACTICE_BANK = [
   {
-    id: "p_img_01",
+    id: "prac_01",
     type: "image",
     roundName: "Practice · Visual Turing Test",
-    title: "Old Library Study Carrel",
-    prompt: "Examine the wooden desk, bookshelf, and lamp light. Is this a real photograph or AI-generated?",
-    media: "assets/media/r1_media_04.jpg", // Messy student desk with real handwriting & cables
+    title: "Antique Mechanical Movement",
+    prompt: "Observe the gears, micro-screws, and ruby bearing jewels. Real photograph or AI-generated?",
+    media: "assets/media/practice_01.jpg",
     options: [
       { id: "HUMAN", label: "👤 REAL PHOTOGRAPH" },
       { id: "AI", label: "🤖 AI GENERATED" }
     ],
-    hint: "Examine whether every cable actually connects into a real port and if the handwritten notes are coherent English words.",
+    hint: "Inspect the micro-screw slots, authentic metallic tool marks, and concentric gear teeth symmetry.",
     ans: "HUMAN",
-    tell: "Every USB cable traces to an actual port, the notebook cursive is coherent English, and the keycaps have authentic physical wear."
+    tell: "Every gear tooth is physically machined with genuine metallic grain, authentic ruby bearing jewels, and consistent light reflection."
   },
   {
-    id: "p_img_02",
+    id: "prac_02",
     type: "image",
     roundName: "Practice · Visual Turing Test",
-    title: "University Walkway & Bulletin Board",
-    prompt: "Look closely at the students and the background posters. Is this a real camera photo or AI-generated?",
-    media: "assets/media/r1_media_01.jpg",
+    title: "Prismatic Crystal Spires",
+    prompt: "Observe the floating crystal architecture. Real macro photograph or AI digital generation?",
+    media: "assets/media/practice_02.jpg",
     options: [
       { id: "HUMAN", label: "👤 REAL PHOTOGRAPH" },
       { id: "AI", label: "🤖 AI GENERATED" }
     ],
-    hint: "Look at the flyers on the bulletin board and see if you can read any individual letters.",
+    hint: "Check the vanishing points of the geometric edges and look for impossible floating light anomalies.",
     ans: "AI",
-    tell: "Zooming into the bulletin board reveals melted, garbled pseudo-glyphs instead of real typographic characters."
+    tell: "The perspective vanishing points conflict across horizontal lines, and the geometric spires exhibit floating physics typical of generative synthesis."
   },
   {
-    id: "p_txt_01",
+    id: "prac_03",
     type: "text",
     roundName: "Practice · Literary Duel",
-    title: "Nature & Solitude",
+    title: "Resilience & The Human Spirit",
     prompt: "Which passage was authored by artificial intelligence?",
-    textA: "“Whose woods these are I think I know.\nHis house is in the village though;\nHe will not see me stopping here\nTo watch his woods fill up with snow.”",
-    textB: "“Whose fields these are I cannot say;\nThe farmer left at end of day;\nHe will not mind me lingering here\nTo see the light go soft and gray.”",
+    passageA: "You may write me down in history\nWith your bitter, twisted lies,\nYou may trod me in the very dirt\nBut still, like dust, I'll rise.",
+    passageB: "You may cast a shadow on my name\nWith words that seek to bind,\nYou may scatter ashes in the wind\nYet strength is what I'll find.",
     options: [
       { id: "A", label: "Passage A is AI" },
       { id: "B", label: "Passage B is AI" }
     ],
-    hint: "One passage grounds itself in concrete physical geography (a specific house, a village); the other relies on vague rhyming filler.",
+    hint: "One passage features fierce, rhythmic, defiant vernacular; the other settles for passive rhyming filler.",
     ans: "B",
-    tell: "Passage B is AI-generated. Passage A is Robert Frost's iconic 1923 poem 'Stopping by Woods on a Snowy Evening'."
+    tell: "Passage B is AI. Passage A is Maya Angelou's legendary 1978 poem 'Still I Rise'. Angelou's gritty, defiant cadence contrasts sharply with the AI's safe, generic phrasing."
   },
   {
-    id: "p_aud_01",
+    id: "prac_04",
     type: "audio",
-    roundName: "Practice · Voice Check",
-    title: "Campus Meeting Reminder",
-    prompt: "Listen closely to the speaker's cadence and breathing. Is this a human recording or synthetic speech?",
-    audioUrl: "assets/audio/clip_02.mp3",
-    transcript: "“Hi everyone! Quick reminder that our next meetup is Thursday at six in the student center. Bring a friend, and yes, there will be pizza.”",
+    roundName: "Practice · Sound Check",
+    title: "Acoustic Chime & Vocal Cadence",
+    prompt: "Listen to the test frequency sequence. Is this an authentic acoustic instrument recording or a digital synthesizer?",
+    audioUrl: "assets/audio/practice_audio.wav",
+    transcript: "“Two-tone acoustic test sequence with exponential decay reverberation.”",
+    audioAccessibilityNotes: "Acoustic cues: Pure harmonic sine wave oscillation, uniform decay envelope, studio zero-noise floor.",
     options: [
-      { id: "HUMAN", label: "👤 HUMAN RECORDING" },
-      { id: "AI", label: "🤖 SYNTHETIC SPEECH" }
+      { id: "HUMAN", label: "👤 ACOUSTIC RECORDING" },
+      { id: "AI", label: "🤖 DIGITAL SYNTHESIS" }
     ],
-    hint: "Listen for the absence of inhalation breaths before clauses, and whether every syllable receives identical emphasis.",
+    hint: "Listen to whether the sound contains room ambient noise or if the frequency is mathematically sterile.",
     ans: "AI",
-    tell: "The speech is generated by a neural text-to-speech model. Notice the metronomic pacing and lack of diaphragmatic breath intake."
+    tell: "The audio is a mathematically pure algorithmic harmonic synthesis, lacking any room air friction or microphone preamp saturation."
   }
 ];

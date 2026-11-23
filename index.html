@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BOT OR NOT? · GWiCS Collegiate Tech Showdown</title>
   <meta name="description" content="BOT OR NOT? Presented by Graduate Women in Computing Society. Test your human instincts against machine intelligence.">
 
@@ -12,6 +12,61 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/game.css">
+  <style>
+    /* Connection status badge */
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--charcoal-850);
+      border: 1px solid var(--charcoal-700);
+      color: var(--text-muted);
+    }
+    .connection-badge.connected {
+      color: var(--color-success);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    .connection-badge.connecting {
+      color: var(--gold-400);
+      border-color: rgba(229, 184, 66, 0.4);
+    }
+    .connection-badge.offline {
+      color: var(--color-danger);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+
+    /* Voided question banner */
+    .voided-question-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--color-danger);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      color: #FFFFFF;
+    }
+
+    /* Change Team Link */
+    .btn-change-team {
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      text-decoration: underline;
+      padding: 4px;
+    }
+    .btn-change-team:hover {
+      color: var(--gold-400);
+    }
+  </style>
 </head>
 <body>
 
@@ -24,10 +79,18 @@
       <span class="brand-sub">GWiCS</span>
     </div>
 
-    <!-- Active Team XP Balance (Shown once joined) -->
-    <div class="xp-balance-pill" id="headerXpPill" style="display:none;" title="Click to view score history">
-      <span>⚡</span>
-      <span id="headerXpVal">100 XP</span>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <!-- Real-time Connection Status Badge -->
+      <div class="connection-badge connecting" id="participantConnBadge" title="Network Connection Status">
+        <span>●</span>
+        <span id="participantConnText">Connecting...</span>
+      </div>
+
+      <!-- Active Team XP Balance (Shown once joined) -->
+      <div class="xp-balance-pill" id="headerXpPill" style="display:none;" title="Click to view score history" role="button" tabindex="0">
+        <span>⚡</span>
+        <span id="headerXpVal">100 XP</span>
+      </div>
     </div>
   </header>
 
@@ -62,7 +125,7 @@
         <span>Put your human instincts to the test. Form a table team and join the live battle.</span>
       </div>
 
-      <!-- Join Form (Revealed after checkbox or accessible directly) -->
+      <!-- Join Form -->
       <form class="join-form" id="joinForm">
         <div class="form-group">
           <label class="form-label" for="roomCodeInput">Room Code</label>
@@ -71,7 +134,7 @@
 
         <div class="form-group">
           <label class="form-label" for="teamNameInput">Team Name</label>
-          <input type="text" class="form-input" id="teamNameInput" placeholder="e.g., Table 4 · Turing's Heirs" required>
+          <input type="text" class="form-input" id="teamNameInput" placeholder="e.g., Table 4 · Turing's Heirs" maxlength="32" required>
         </div>
 
         <button type="submit" class="btn-join">
@@ -97,7 +160,10 @@
       <div class="status-banner">
         <div>
           <span class="status-round-tag" id="gameRoundTag">Round 1</span>
-          <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Team: Loading...</div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Team: Loading...</div>
+            <button class="btn-change-team" id="btnChangeTeam">Change Team</button>
+          </div>
         </div>
         <div class="status-timer-pill" id="gameTimerPill">
           <span>⏱</span>
@@ -110,7 +176,7 @@
         <div style="font-size:40px; margin-bottom:12px;">🛰️</div>
         <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Session!</h2>
         <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 20px;">
-          Starting balance: <strong>100 XP</strong>. Discuss with your table. When the host launches the question, answer buttons will appear here.
+          Starting balance: <strong>100 XP</strong>. Discuss with your table. When the host launches the question, answer options will appear here.
         </p>
         <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400);">
           Watching for Host launch...
@@ -180,10 +246,18 @@
           </button>
         </div>
 
-        <!-- Submitted Waiting State -->
+        <!-- Submission Status Banners -->
         <div class="submitted-waiting-banner" id="submittedBanner" style="display:none;">
           <span>✓</span>
-          <span>Answer submitted. Waiting for the host.</span>
+          <span id="submittedBannerText">Answer submitted. Waiting for the host.</span>
+        </div>
+
+        <div class="voided-question-banner" id="voidedBanner" style="display:none;">
+          <span style="font-size:20px;">⚠️</span>
+          <div>
+            <strong>Question Voided by Host</strong>
+            <div style="font-size:12px; color:var(--text-muted);">No points awarded. Any XP spent on hints for this question has been refunded.</div>
+          </div>
         </div>
 
         <!-- Released Result Box (Shown when host reveals) -->
@@ -226,9 +300,9 @@
        MODALS
        ==================================================================== -->
   <!-- 1. Hint Purchase Confirmation Modal -->
-  <div class="modal-overlay" id="hintModal">
+  <div class="modal-overlay" id="hintModal" role="dialog" aria-modal="true" aria-labelledby="hintModalTitle">
     <div class="modal-dialog">
-      <h3 style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Unlock Forensic Hint?</h3>
+      <h3 id="hintModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Unlock Forensic Hint?</h3>
       <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;" id="hintModalText">
         Spend 25 XP on a hint? Your balance will change from 100 to 75 XP.
       </p>
@@ -244,41 +318,60 @@
   </div>
 
   <!-- 2. Image Zoom Modal -->
-  <div class="modal-overlay" id="zoomModal">
-    <div class="modal-dialog" style="max-width:90vw; padding:12px; background:#000;">
-      <button class="modal-close" id="btnCloseZoom">✕</button>
-      <img id="zoomModalImg" src="" style="width:100%; height:auto; max-height:80vh; object-fit:contain;" alt="Zoomed view">
+  <div class="modal-overlay" id="zoomModal" role="dialog" aria-modal="true">
+    <div class="modal-dialog" style="max-width:92vw; padding:12px; background:#000;">
+      <button class="modal-close" id="btnCloseZoom" aria-label="Close image zoom">✕</button>
+      <img id="zoomModalImg" src="" style="width:100%; height:auto; max-height:82vh; object-fit:contain;" alt="Zoomed view">
     </div>
   </div>
 
   <!-- 3. Rules Modal -->
-  <div class="modal-overlay" id="rulesModal">
+  <div class="modal-overlay" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
     <div class="modal-dialog">
-      <button class="modal-close" id="btnCloseRules">✕</button>
+      <button class="modal-close" id="btnCloseRules" aria-label="Close rules">✕</button>
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Rules & Scoring</div>
-      <h3 style="font-family:var(--font-display); font-size:20px; margin-bottom:12px;">How The Showdown Works</h3>
+      <h3 id="rulesModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:12px;">How The Showdown Works</h3>
       <ul style="padding-left:18px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:10px; line-height:1.6;">
         <li><strong>One Captain Submits:</strong> One phone per table submits the team's answer. Everyone else discusses at the table and watches the projector.</li>
         <li><strong>XP Economy:</strong> Every team starts with <strong>100 XP</strong>. Correct answers award <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
         <li><strong>Paid Hints:</strong> You can unlock 1 hint per question for <strong>25 XP</strong>. The hint is private to your team.</li>
-        <li><strong>Locked Submissions:</strong> Once your captain taps submit, your answer is sealed until the host reveals the verdict.</li>
+        <li><strong>Locked Submissions:</strong> Once your captain locks in your choice, your answer is sealed until the host reveals the verdict.</li>
       </ul>
     </div>
   </div>
 
   <!-- 4. Score History Modal -->
-  <div class="modal-overlay" id="historyModal">
+  <div class="modal-overlay" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
     <div class="modal-dialog">
-      <button class="modal-close" id="btnCloseHistory">✕</button>
+      <button class="modal-close" id="btnCloseHistory" aria-label="Close score history">✕</button>
       <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Team Record</div>
-      <h3 style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">XP Balance & History</h3>
-      <div id="historyList" style="display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto; font-size:13px;">
+      <h3 id="historyModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">XP Balance & History</h3>
+      <div id="historyList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; font-size:13px;">
         <!-- Populated dynamically -->
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- 5. Leave / Change Team Confirmation Modal -->
+  <div class="modal-overlay" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveModalTitle">
+    <div class="modal-dialog">
+      <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave or Switch Team?</h3>
+      <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
+        Leaving will disconnect your phone from this table team. You can join another team or rejoin later.
+      </p>
+      <div style="display:flex; gap:12px;">
+        <button class="btn-join" style="flex:1; padding:12px; background:var(--color-danger); border-color:var(--color-danger);" id="btnConfirmLeave">
+          Leave Team
+        </button>
+        <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelLeave">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts: PeerJS CDN for WebRTC cross-device networking -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="js/practice_bank.js"></script>
   <script src="js/sync_engine.js"></script>
   <script src="js/participant.js"></script>

@@ -29,7 +29,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 3.5vw 4.5vw;
+      padding: 3.2vw 4.5vw;
       box-sizing: border-box;
       position: relative;
     }
@@ -39,7 +39,7 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 2px solid var(--charcoal-700);
-      padding-bottom: 1.5vw;
+      padding-bottom: 1.2vw;
     }
 
     .stage-brand {
@@ -54,22 +54,48 @@
 
     .stage-timer-box {
       font-family: var(--font-mono);
-      font-size: 2.4vw;
+      font-size: 2.2vw;
       font-weight: 800;
       background: var(--charcoal-850);
       border: 2px solid var(--charcoal-700);
-      padding: 0.4vw 1.6vw;
+      padding: 0.3vw 1.5vw;
       border-radius: var(--radius-pill);
       color: var(--gold-400);
       display: flex;
       align-items: center;
-      gap: 1vw;
+      gap: 0.8vw;
     }
 
     .stage-timer-box.urgent {
       color: var(--color-danger);
       border-color: var(--color-danger);
       animation: pulse-border 1s infinite;
+    }
+
+    /* Connection status badge */
+    .stage-conn-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5vw;
+      font-family: var(--font-mono);
+      font-size: 1vw;
+      padding: 0.3vw 0.8vw;
+      border-radius: var(--radius-pill);
+      background: var(--charcoal-850);
+      border: 1px solid var(--charcoal-700);
+      color: var(--text-muted);
+    }
+    .stage-conn-badge.connected {
+      color: var(--color-success);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    .stage-conn-badge.connecting {
+      color: var(--gold-400);
+      border-color: rgba(229, 184, 66, 0.4);
+    }
+    .stage-conn-badge.offline {
+      color: var(--color-danger);
+      border-color: rgba(239, 68, 68, 0.4);
     }
 
     /* Stage Canvas */
@@ -79,19 +105,19 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin: 2vw 0;
+      margin: 1.5vw 0;
       position: relative;
     }
 
     /* Lobby View */
     .projector-lobby {
       text-align: center;
-      max-width: 70vw;
+      max-width: 72vw;
     }
 
     .lobby-big-title {
       font-family: var(--font-display);
-      font-size: 5.5vw;
+      font-size: 5vw;
       font-weight: 900;
       line-height: 1.05;
       margin-bottom: 2vw;
@@ -104,7 +130,7 @@
       padding: 2vw 3vw;
       display: inline-flex;
       flex-direction: column;
-      gap: 1vw;
+      gap: 0.8vw;
       box-shadow: 0 0 40px var(--gold-subtle);
     }
 
@@ -134,16 +160,16 @@
 
     .projector-q-head {
       font-family: var(--font-display);
-      font-size: 2.8vw;
+      font-size: 2.6vw;
       font-weight: 800;
-      margin-bottom: 0.5vw;
+      margin-bottom: 0.4vw;
       line-height: 1.2;
     }
 
     .projector-q-prompt {
-      font-size: 1.6vw;
+      font-size: 1.5vw;
       color: var(--text-muted);
-      margin-bottom: 1.5vw;
+      margin-bottom: 1.2vw;
     }
 
     /* Media Area */
@@ -183,7 +209,7 @@
       flex-direction: column;
       justify-content: center;
       font-family: var(--font-serif);
-      font-size: 1.8vw;
+      font-size: 1.7vw;
       line-height: 1.6;
       white-space: pre-line;
       color: #FFFFFF;
@@ -191,10 +217,10 @@
 
     .projector-poem-tag {
       font-family: var(--font-mono);
-      font-size: 1.3vw;
+      font-size: 1.2vw;
       font-weight: 800;
       color: var(--gold-400);
-      margin-bottom: 1vw;
+      margin-bottom: 0.8vw;
       text-transform: uppercase;
     }
 
@@ -204,23 +230,33 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 2vw;
+      gap: 1.8vw;
       text-align: center;
       width: 100%;
     }
 
     .audio-big-orb {
-      width: 14vw;
-      height: 14vw;
+      width: 12vw;
+      height: 12vw;
       border-radius: 50%;
       background: var(--charcoal-850);
       border: 4px solid var(--cyan-500);
       display: grid;
       place-items: center;
       font-family: var(--font-display);
-      font-size: 2vw;
+      font-size: 1.8vw;
       font-weight: 800;
       box-shadow: 0 0 40px var(--cyan-glow);
+    }
+
+    /* Showdown Grid */
+    .projector-showdown-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5vw;
+      width: 100%;
+      flex: 1;
+      align-items: center;
     }
 
     /* Submissions Progress Footer */
@@ -229,9 +265,9 @@
       align-items: center;
       justify-content: space-between;
       border-top: 2px solid var(--charcoal-700);
-      padding-top: 1.5vw;
+      padding-top: 1.2vw;
       font-family: var(--font-mono);
-      font-size: 1.3vw;
+      font-size: 1.2vw;
       color: var(--text-muted);
     }
 
@@ -242,8 +278,8 @@
     }
 
     .submissions-bar {
-      width: 20vw;
-      height: 1.2vw;
+      width: 18vw;
+      height: 1vw;
       background: var(--charcoal-800);
       border-radius: var(--radius-pill);
       overflow: hidden;
@@ -260,7 +296,7 @@
     .stage-reveal-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(7, 9, 13, 0.95);
+      background: rgba(7, 9, 13, 0.96);
       border: 3px solid var(--gold-500);
       border-radius: var(--radius-lg);
       padding: 3vw;
@@ -276,13 +312,13 @@
 
     .reveal-badge-giant {
       font-family: var(--font-display);
-      font-size: 4vw;
+      font-size: 3.8vw;
       font-weight: 900;
       color: #000;
       background: var(--gold-500);
-      padding: 0.6vw 3vw;
+      padding: 0.5vw 2.5vw;
       border-radius: var(--radius-pill);
-      margin-bottom: 2vw;
+      margin-bottom: 1.8vw;
       box-shadow: 0 0 30px var(--gold-glow);
     }
 
@@ -292,7 +328,7 @@
     }
 
     .reveal-tell-giant {
-      font-size: 2vw;
+      font-size: 1.9vw;
       color: #FFFFFF;
       max-width: 65vw;
       line-height: 1.5;
@@ -304,7 +340,7 @@
       max-width: 70vw;
       display: flex;
       flex-direction: column;
-      gap: 1vw;
+      gap: 0.8vw;
     }
 
     .stage-board-card {
@@ -314,8 +350,8 @@
       background: var(--charcoal-850);
       border: 1px solid var(--charcoal-700);
       border-radius: var(--radius-md);
-      padding: 1vw 2vw;
-      font-size: 1.8vw;
+      padding: 0.8vw 1.8vw;
+      font-size: 1.6vw;
       font-weight: 700;
     }
 
@@ -332,15 +368,12 @@
       transition: opacity 0.2s;
       z-index: 1000;
     }
-
-    .fs-toggle-btn:hover {
-      opacity: 1;
-    }
+    .fs-toggle-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen Toggle Button (Auto-hidden in corner) -->
+  <!-- Fullscreen Toggle Button -->
   <button class="btn btn-outline-charcoal btn-sm fs-toggle-btn" id="btnFullscreen" title="Toggle Fullscreen (F)">
     ⛶ Fullscreen
   </button>
@@ -351,12 +384,17 @@
     <header class="stage-header">
       <div class="stage-brand">
         <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
-        <span style="font-family:var(--font-mono); font-size:1.2vw; color:var(--text-dim); margin-left:1vw; text-transform:uppercase;">GWiCS Showdown</span>
+        <span style="font-family:var(--font-mono); font-size:1.1vw; color:var(--text-dim); margin-left:1vw; text-transform:uppercase;">GWiCS Showdown</span>
       </div>
 
-      <div class="stage-timer-box" id="stageTimerBox">
-        <span>⏱</span>
-        <span id="stageTimerNum">45s</span>
+      <div style="display:flex; align-items:center; gap:1.2vw;">
+        <div class="stage-conn-badge connecting" id="stageConnBadge">
+          <span>●</span> <span id="stageConnText">Connecting...</span>
+        </div>
+        <div class="stage-timer-box" id="stageTimerBox">
+          <span>⏱</span>
+          <span id="stageTimerNum">45s</span>
+        </div>
       </div>
     </header>
 
@@ -370,10 +408,10 @@
         </h1>
 
         <div class="lobby-join-instructions">
-          <div style="font-family:var(--font-mono); font-size:1.4vw; color:var(--text-muted); text-transform:uppercase;">
+          <div style="font-family:var(--font-mono); font-size:1.3vw; color:var(--text-muted); text-transform:uppercase;">
             Join on your table captain's phone
           </div>
-          <div style="font-family:var(--font-display); font-size:2vw; font-weight:800; color:#FFFFFF;">
+          <div style="font-family:var(--font-display); font-size:1.8vw; font-weight:800; color:#FFFFFF;">
             shivangisrivastava013.github.io/gwics-ai-vs-human
           </div>
           <div class="lobby-room-code-tag" id="stageRoomCode">
@@ -419,6 +457,22 @@
             “Audio transcript”
           </div>
         </div>
+
+        <!-- Media Stage: Round 4 Live Showdown -->
+        <div class="projector-showdown-grid" id="stageShowdownContainer" style="display:none;">
+          <div class="projector-poem-card" style="text-align:center;">
+            <div class="projector-poem-tag" style="font-size:1.8vw;">Contender A</div>
+            <div style="font-size:1.3vw; color:var(--text-muted); font-family:var(--font-mono);">Live Student Volunteer</div>
+          </div>
+          <div class="projector-poem-card" style="text-align:center;">
+            <div class="projector-poem-tag" style="font-size:1.8vw;">Contender B</div>
+            <div style="font-size:1.3vw; color:var(--text-muted); font-family:var(--font-mono);">Live Student Volunteer</div>
+          </div>
+          <div class="projector-poem-card" style="text-align:center;">
+            <div class="projector-poem-tag" style="font-size:1.8vw; color:var(--cyan-400);">Contender C</div>
+            <div style="font-size:1.3vw; color:var(--text-muted); font-family:var(--font-mono);">Live Generative AI Model</div>
+          </div>
+        </div>
       </div>
 
       <!-- 3. GRAND REVEAL BANNER (Appears when host triggers reveal) -->
@@ -429,9 +483,17 @@
         </div>
       </div>
 
-      <!-- 4. LEADERBOARD VIEW -->
+      <!-- 4. VOIDED BANNER -->
+      <div class="stage-reveal-overlay" id="stageVoidOverlay" style="display:none; border-color:var(--color-danger); box-shadow:0 0 50px rgba(239, 68, 68, 0.4);">
+        <div class="reveal-badge-giant" style="background:var(--color-danger); color:#FFFFFF;">QUESTION VOIDED</div>
+        <div class="reveal-tell-giant">
+          This question has been voided by the host. No points awarded or deducted. All hint XP refunded.
+        </div>
+      </div>
+
+      <!-- 5. LEADERBOARD VIEW -->
       <div class="projector-lobby" id="stageLeaderboardView" style="display:none;">
-        <h2 style="font-family:var(--font-display); font-size:3.5vw; font-weight:900; margin-bottom:1.5vw; color:var(--gold-400);">
+        <h2 style="font-family:var(--font-display); font-size:3.2vw; font-weight:900; margin-bottom:1.5vw; color:var(--gold-400);">
           🏆 Official Standings
         </h2>
         <div class="stage-leaderboard-grid" id="stageLeaderboardList">
@@ -458,6 +520,8 @@
 
   </div>
 
+  <!-- Scripts: PeerJS CDN for WebRTC cross-device networking -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="js/sync_engine.js"></script>
   <script src="js/projector.js"></script>
 </body>

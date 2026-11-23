@@ -1,3 +1,11 @@
+# Local Organizer Secrets & Private Keys
+local_organizer_vault/
+*_vault/
+*.xlsx
+secrets/
+.env*
+
+# System & Editor
 .DS_Store
 Thumbs.db
 *.log

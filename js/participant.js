@@ -25,9 +25,11 @@
     history: []
   };
 
+  let activeQuestionId = null;
   let selectedChoice = null;
-  let isSubmittedForCurrentQ = false;
+  let isSubmitting = false;
   let currentAudio = null;
+  let timerInterval = null;
 
   /* --------------------------------------------------------------------------
      1. INITIALIZATION & RECONNECTION
@@ -37,6 +39,7 @@
     setupModals();
     setupJoinForm();
     setupPracticeSandbox();
+    setupLeaveTeam();
 
     // Check for existing captain session in localStorage
     const saved = localStorage.getItem(SESSION_KEY);
@@ -52,6 +55,27 @@
     // Engine Event Listeners
     Engine.onStateChange(handleStateUpdate);
     Engine.onTeamUpdate(handleTeamUpdate);
+    Engine.onConnectionChange(renderConnection);
+    Engine.onEvent(handleNetworkEvent);
+
+    renderConnection(Engine.connectionStatus);
+  }
+
+  function renderConnection(status) {
+    const badge = document.getElementById("participantConnBadge");
+    const text = document.getElementById("participantConnText");
+    if (!badge || !text) return;
+
+    badge.className = `connection-badge ${status.toLowerCase()}`;
+    if (status === "CONNECTED") {
+      text.textContent = "Connected";
+    } else if (status === "CONNECTING") {
+      text.textContent = "Connecting...";
+    } else if (status === "RECONNECTING") {
+      text.textContent = "Reconnecting...";
+    } else {
+      text.textContent = "Offline";
+    }
   }
 
   /* --------------------------------------------------------------------------
@@ -124,6 +148,27 @@
     document.getElementById("gameTeamNameLabel").textContent = `Team: ${teamName}`;
   }
 
+  function setupLeaveTeam() {
+    const btn = document.getElementById("btnChangeTeam");
+    const modal = document.getElementById("leaveModal");
+    const btnConfirm = document.getElementById("btnConfirmLeave");
+    const btnCancel = document.getElementById("btnCancelLeave");
+
+    if (btn) btn.onclick = () => modal.classList.add("open");
+    if (btnCancel) btnCancel.onclick = () => modal.classList.remove("open");
+
+    if (btnConfirm) {
+      btnConfirm.onclick = () => {
+        localStorage.removeItem(SESSION_KEY);
+        myTeam = { id: null, name: "", xp: 100, answers: {}, unlockedHints: {}, history: [] };
+        modal.classList.remove("open");
+        document.getElementById("viewInGame").style.display = "none";
+        document.getElementById("headerXpPill").style.display = "none";
+        document.getElementById("viewEntrance").style.display = "block";
+      };
+    }
+  }
+
   /* --------------------------------------------------------------------------
      4. SYNCHRONIZED STATE UPDATES FROM HOST
      -------------------------------------------------------------------------- */
@@ -136,10 +181,20 @@
     const cardLobby = document.getElementById("cardLobbyState");
     const cardActive = document.getElementById("cardActiveQuestion");
 
-    // Update Timer
-    if (state.timer) {
-      timerText.textContent = `${state.timer.remaining}s`;
-      timerPill.classList.toggle("urgent", state.timer.remaining <= 10 && state.timer.running);
+    // Dynamic timer calculation from absolute deadline (prevents drift if tab slept)
+    clearInterval(timerInterval);
+    function updateTimer() {
+      if (!state.timer) return;
+      let rem = state.timer.remaining;
+      if (state.timer.running && state.timer.deadline > 0) {
+        rem = Math.max(0, Math.ceil((state.timer.deadline - Date.now()) / 1000));
+      }
+      timerText.textContent = `${rem}s`;
+      timerPill.classList.toggle("urgent", rem <= 10 && state.timer.running);
+    }
+    updateTimer();
+    if (state.timer && state.timer.running) {
+      timerInterval = setInterval(updateTimer, 500);
     }
 
     if (state.status === "LOBBY") {
@@ -149,7 +204,7 @@
       return;
     }
 
-    // Question or Result State
+    // Active Question State
     cardLobby.style.display = "none";
     cardActive.style.display = "block";
 
@@ -158,6 +213,23 @@
 
     if (roundTag) {
       roundTag.textContent = `Round ${state.roundNum} · ${q.title}`;
+    }
+
+    // Question Changed Check: Reset form controls when host switches question
+    if (activeQuestionId !== q.id) {
+      activeQuestionId = q.id;
+      selectedChoice = null;
+      isSubmitting = false;
+
+      // Close hint modal if open from previous question
+      const hintModal = document.getElementById("hintModal");
+      if (hintModal) hintModal.classList.remove("open");
+
+      // Stop previous audio
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
     }
 
     renderActiveQuestion(q, state);
@@ -201,15 +273,21 @@
       };
     }
 
-    // 2. Options Grid
+    // 2. Options Grid & Submission Status
     const grid = document.getElementById("optionsGrid");
     const submitBtn = document.getElementById("btnSubmitAnswer");
     const submittedBanner = document.getElementById("submittedBanner");
+    const submittedBannerText = document.getElementById("submittedBannerText");
     const submitBar = document.getElementById("submitBar");
+    const voidedBanner = document.getElementById("voidedBanner");
 
-    // Check if team already submitted for this question
     const teamSub = (myTeam.answers || {})[q.id];
-    isSubmittedForCurrentQ = !!teamSub;
+    const isSubmitted = !!teamSub;
+    const isVoided = state.status === "VOIDED";
+    const isLocked = state.status === "LOCKED" || isVoided;
+    const isRevealed = state.status === "REVEALED" || state.status === "RESULTS";
+
+    voidedBanner.style.display = isVoided ? "flex" : "none";
 
     grid.innerHTML = "";
     (q.options || []).forEach(opt => {
@@ -218,13 +296,13 @@
       btn.dataset.id = opt.id;
       btn.textContent = opt.label;
 
-      const isChosen = isSubmittedForCurrentQ ? teamSub.choice === opt.id : selectedChoice === opt.id;
+      const isChosen = isSubmitted ? teamSub.choice === opt.id : selectedChoice === opt.id;
       if (isChosen) btn.classList.add("selected");
 
-      btn.disabled = isSubmittedForCurrentQ || state.status === "LOCKED" || state.status === "REVEALED";
+      btn.disabled = isSubmitted || isLocked || isRevealed;
 
       btn.onclick = () => {
-        if (isSubmittedForCurrentQ) return;
+        if (isSubmitted || isLocked) return;
         selectedChoice = opt.id;
         grid.querySelectorAll(".btn-option").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
@@ -236,15 +314,24 @@
     });
 
     // Submission Bar State
-    if (isSubmittedForCurrentQ) {
+    if (isSubmitted) {
       submitBar.style.display = "none";
       submittedBanner.style.display = "flex";
+      submittedBannerText.textContent = `Answer (${teamSub.choice}) submitted. Waiting for the host.`;
+    } else if (isVoided) {
+      submitBar.style.display = "none";
+      submittedBanner.style.display = "none";
     } else {
       submitBar.style.display = "block";
       submittedBanner.style.display = "none";
-      submitBtn.disabled = !selectedChoice || state.status !== "QUESTION";
+      submitBtn.disabled = !selectedChoice || state.status !== "QUESTION" || isSubmitting;
+      submitBtn.textContent = isSubmitting ? "Submitting..." : (selectedChoice ? `Lock in: ${selectedChoice}` : "Select an Answer");
+
       submitBtn.onclick = () => {
-        if (!selectedChoice) return;
+        if (!selectedChoice || isSubmitting) return;
+        isSubmitting = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting to Host...";
         Engine.submitAnswer(selectedChoice);
       };
     }
@@ -263,9 +350,9 @@
       unlockedText.textContent = unlockedClue;
     } else {
       unlockedBox.style.display = "none";
-      hintBar.style.display = q.hintAvailable ? "flex" : "none";
+      hintBar.style.display = (q.hintAvailable && !isVoided) ? "flex" : "none";
 
-      const canBuy = myTeam.xp >= 25 && state.status === "QUESTION" && !isSubmittedForCurrentQ;
+      const canBuy = myTeam.xp >= 25 && state.status === "QUESTION" && !isSubmitted;
       hintBtn.disabled = !canBuy;
       hintBtn.textContent = myTeam.xp >= 25 ? "Unlock hint · 25 XP" : "Insufficient XP (25 required)";
 
@@ -274,7 +361,7 @@
 
     // 4. Released Results (When host reveals answer)
     const resultBox = document.getElementById("releasedResultBox");
-    if (state.status === "REVEALED" || state.status === "RESULTS") {
+    if (isRevealed && !isVoided) {
       resultBox.style.display = "block";
       const isCorrect = teamSub && teamSub.choice === state.releasedAnswer;
       resultBox.className = `released-result-box ${isCorrect ? 'correct' : 'incorrect'}`;
@@ -285,7 +372,7 @@
         teamSub ? (isCorrect ? "+100 XP (Correct!)" : "0 XP (Incorrect)") : "No Answer Submitted";
       document.getElementById("releasedPointsDelta").style.color = isCorrect ? "var(--color-success)" : "var(--color-danger)";
       document.getElementById("releasedTellText").innerHTML = `
-        <strong>The Tell:</strong> ${state.releasedTell || "Verified by host."}
+        <strong>The Tell:</strong> ${escapeHtml(state.releasedTell || "Verified by host.")}
       `;
     } else {
       resultBox.style.display = "none";
@@ -300,6 +387,37 @@
     // Re-render current question to sync unlocked hints & XP
     if (Engine.publicState.currentQuestion) {
       renderActiveQuestion(Engine.publicState.currentQuestion, Engine.publicState);
+    }
+  }
+
+  function handleNetworkEvent(event) {
+    if (!event) return;
+
+    if (event.type === "SUBMIT_ACK") {
+      isSubmitting = false;
+      if (event.status === "ACCEPTED") {
+        const banner = document.getElementById("submittedBanner");
+        const submitBar = document.getElementById("submitBar");
+        if (banner) banner.style.display = "flex";
+        if (submitBar) submitBar.style.display = "none";
+      } else {
+        alert("Submission notice: " + (event.reason || "Unable to submit."));
+        const submitBtn = document.getElementById("btnSubmitAnswer");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = selectedChoice ? `Lock in: ${selectedChoice}` : "Select an Answer";
+        }
+      }
+    } else if (event.type === "HINT_ACK") {
+      if (event.status === "ACCEPTED" || event.status === "ALREADY_OWNED") {
+        if (!myTeam.unlockedHints) myTeam.unlockedHints = {};
+        myTeam.unlockedHints[event.questionId] = event.hint;
+        if (Engine.publicState.currentQuestion) {
+          renderActiveQuestion(Engine.publicState.currentQuestion, Engine.publicState);
+        }
+      } else {
+        alert("Hint request: " + (event.reason || "Hint unavailable."));
+      }
     }
   }
 
@@ -339,6 +457,8 @@
     const rulesModal = document.getElementById("rulesModal");
     const zoomModal = document.getElementById("zoomModal");
     const historyModal = document.getElementById("historyModal");
+    const hintModal = document.getElementById("hintModal");
+    const leaveModal = document.getElementById("leaveModal");
 
     document.getElementById("btnOpenRules").onclick = () => rulesModal.classList.add("open");
     document.getElementById("btnCloseRules").onclick = () => rulesModal.classList.remove("open");
@@ -348,19 +468,49 @@
     // History Modal
     document.getElementById("headerXpPill").onclick = () => {
       const list = document.getElementById("historyList");
-      list.innerHTML = (myTeam.history || []).map(h => `
-        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--charcoal-700);">
-          <span>${h.desc}</span>
-          <strong style="color:${h.delta >= 0 ? 'var(--color-success)' : 'var(--color-danger)'};">${h.delta >= 0 ? '+' : ''}${h.delta} XP</strong>
-        </div>
-      `).join("") || "<div>No score history yet.</div>";
+      list.innerHTML = "";
+
+      const history = myTeam.history || [];
+      if (!history.length) {
+        list.innerHTML = `<div style="color:var(--text-dim); padding:10px;">No score history yet.</div>`;
+      } else {
+        history.slice().reverse().forEach(h => {
+          const row = document.createElement("div");
+          row.style.display = "flex";
+          row.style.justifyContent = "space-between";
+          row.style.padding = "8px 0";
+          row.style.borderBottom = "1px solid var(--charcoal-700)";
+
+          const descSpan = document.createElement("span");
+          descSpan.textContent = h.desc;
+
+          const deltaSpan = document.createElement("strong");
+          deltaSpan.style.color = h.delta >= 0 ? "var(--color-success)" : "var(--color-danger)";
+          deltaSpan.textContent = `${h.delta >= 0 ? '+' : ''}${h.delta} XP`;
+
+          row.appendChild(descSpan);
+          row.appendChild(deltaSpan);
+          list.appendChild(row);
+        });
+      }
+
       historyModal.classList.add("open");
     };
 
-    [rulesModal, zoomModal, historyModal].forEach(m => {
+    // Close modals on overlay click or Escape key
+    [rulesModal, zoomModal, historyModal, hintModal, leaveModal].forEach(m => {
+      if (!m) return;
       m.addEventListener("click", (e) => {
         if (e.target === m) m.classList.remove("open");
       });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        [rulesModal, zoomModal, historyModal, hintModal, leaveModal].forEach(m => {
+          if (m) m.classList.remove("open");
+        });
+      }
     });
   }
 
@@ -382,10 +532,10 @@
 
       container.innerHTML = `
         <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">
-          ${item.roundName} · Sample ${pIdx + 1} of ${PracticeBank.length}
+          ${escapeHtml(item.roundName)} · Sample ${pIdx + 1} of ${PracticeBank.length}
         </div>
-        <h3 class="question-title">${item.title}</h3>
-        <p class="question-prompt">${item.prompt}</p>
+        <h3 class="question-title">${escapeHtml(item.title)}</h3>
+        <p class="question-prompt">${escapeHtml(item.prompt)}</p>
 
         ${item.media ? `
           <div class="question-media-frame">
@@ -393,33 +543,33 @@
           </div>
         ` : ''}
 
-        ${item.textA ? `
+        ${(item.passageA || item.textA) ? `
           <div class="stacked-passages">
-            <div class="passage-card"><span class="passage-tag">Passage A</span>${item.textA}</div>
-            <div class="passage-card"><span class="passage-tag">Passage B</span>${item.textB}</div>
+            <div class="passage-card"><span class="passage-tag">Passage A</span>${escapeHtml(item.passageA || item.textA)}</div>
+            <div class="passage-card"><span class="passage-tag">Passage B</span>${escapeHtml(item.passageB || item.textB)}</div>
           </div>
         ` : ''}
 
         ${item.audioUrl ? `
           <div class="audio-card-box">
-            <div class="audio-script-quote">${item.transcript}</div>
+            <div class="audio-script-quote">${escapeHtml(item.transcript)}</div>
             <button class="btn-option" id="btnPracticePlayAudio" style="margin:0 auto; padding:8px 16px; font-size:13px;">▶ Play Sample Audio</button>
           </div>
         ` : ''}
 
         <div class="unlocked-hint-box" style="margin-bottom:14px;">
-          <strong style="color:var(--gold-400);">Sample Clue:</strong> ${item.hint}
+          <strong style="color:var(--gold-400);">Sample Clue:</strong> ${escapeHtml(item.hint)}
         </div>
 
         <div class="options-grid" id="practiceOptions">
           ${item.options.map(opt => `
-            <button class="btn-option" data-opt="${opt.id}">${opt.label}</button>
+            <button class="btn-option" data-opt="${opt.id}">${escapeHtml(opt.label)}</button>
           `).join("")}
         </div>
 
         <div class="released-result-box" id="practiceResultBox" style="display:none;">
           <div style="font-family:var(--font-display); font-weight:800; margin-bottom:6px;" id="practiceVerdictText"></div>
-          <div class="released-tell">${item.tell}</div>
+          <div class="released-tell">${escapeHtml(item.tell)}</div>
         </div>
 
         <div style="display:flex; justify-content:space-between; margin-top:20px;">
@@ -468,6 +618,15 @@
     };
   }
 
-  // Run on DOM ready
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   document.addEventListener("DOMContentLoaded", init);
 })();
