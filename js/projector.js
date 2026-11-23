@@ -23,6 +23,14 @@
     Engine.initAsProjector(roomCode);
     Engine.onStateChange(handleStateUpdate);
     Engine.onConnectionChange(renderConnection);
+    Engine.on("eventMessage", (evt) => {
+      if (evt && evt.type === "SESSION_RESET") {
+        try {
+          localStorage.removeItem("gwics_game_state");
+        } catch (e) {}
+        if (evt.state) handleStateUpdate(evt.state);
+      }
+    });
 
     renderConnection(Engine.connectionStatus);
 

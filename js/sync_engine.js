@@ -167,6 +167,17 @@
             if (data && data.state) {
               this.onRemoteStateUpdate(data.state);
             }
+            if (data && data.type === "SESSION_RESET") {
+              try {
+                localStorage.removeItem("gwics_captain_session");
+                localStorage.removeItem("botornot_player_session");
+                sessionStorage.removeItem("gwics_captain_session");
+                sessionStorage.removeItem("botornot_player_session");
+              } catch (e) {}
+              this.currentTeamId = null;
+              this.currentTeamName = "";
+              this.emit("eventMessage", data);
+            }
           } catch (err) {}
         };
         sse.onerror = () => {
@@ -449,7 +460,7 @@
       this.competitionPack = pack;
     }
 
-    resetSession() {
+    async resetSession() {
       if (this.timerInterval) {
         clearInterval(this.timerInterval);
         this.timerInterval = null;
@@ -459,10 +470,26 @@
       this.publicState.roomCode = this.roomCode;
       this.teams = {};
 
+      if (this.backendActive && this.backendUrl) {
+        try {
+          await fetch(`${this.backendUrl}/api/host/action`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(this.hostToken ? { "Authorization": `Bearer ${this.hostToken}` } : {})
+            },
+            body: JSON.stringify({ action: "RESET_SESSION" })
+          });
+        } catch (e) {
+          console.warn("Backend resetSession error:", e);
+        }
+      }
+
       try {
         localStorage.removeItem(STORAGE_PREFIX + "host_state");
         localStorage.removeItem(STORAGE_PREFIX + "host_teams");
         localStorage.removeItem(STORAGE_PREFIX + "state");
+        localStorage.removeItem(STORAGE_PREFIX + "client_msg");
       } catch (e) {}
 
       const resetPayload = {

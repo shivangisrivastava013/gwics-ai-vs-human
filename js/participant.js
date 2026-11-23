@@ -173,11 +173,29 @@
       btnConfirm.onclick = () => {
         localStorage.removeItem(SESSION_KEY);
         localStorage.removeItem("botornot_player_session");
+        sessionStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem("botornot_player_session");
         myTeam = { id: null, name: "", xp: 100, answers: {}, unlockedHints: {}, history: [] };
         modal.classList.remove("open");
         document.getElementById("viewInGame").style.display = "none";
         document.getElementById("headerXpPill").style.display = "none";
         document.getElementById("viewEntrance").style.display = "block";
+      };
+    }
+
+    const btnClear = document.getElementById("btnClearMyData");
+    if (btnClear) {
+      btnClear.onclick = () => {
+        if (confirm("Clear all local game history and player data on this device?")) {
+          if (window.GWICS_App && window.GWICS_App.resetGame) {
+            window.GWICS_App.resetGame();
+          } else {
+            localStorage.clear();
+            sessionStorage.clear();
+          }
+          alert("All local data cleared. You are back at the fresh lobby.");
+          location.reload();
+        }
       };
     }
   }

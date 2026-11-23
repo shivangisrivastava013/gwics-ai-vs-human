@@ -766,24 +766,14 @@
 
     document.getElementById("btnRefreshTeams").onclick = renderTeams;
 
-    document.getElementById("btnResetAll").onclick = () => {
+    document.getElementById("btnResetAll").onclick = async () => {
       if (confirm("Reset the entire game session? This clears all player scores, submitted answers, and returns the room (and all connected players and presentation screen) back to a fresh lobby.")) {
-        Engine.resetSession();
+        if (Engine && Engine.resetSession) {
+          await Engine.resetSession();
+        }
         localStorage.clear();
         sessionStorage.clear();
-        alert("Session reset complete. The room is now clean.");
-        location.reload();
-      }
-    };
-
-    document.getElementById("btnRefreshTeams").onclick = renderTeams;
-
-    document.getElementById("btnResetAll").onclick = () => {
-      if (confirm("Reset the entire game session? This clears all player scores, submitted answers, and returns the room (and all connected players and presentation screen) back to a fresh lobby.")) {
-        Engine.resetSession();
-        localStorage.clear();
-        sessionStorage.clear();
-        alert("Session reset complete. The room is now clean.");
+        alert("Session reset complete. The room and all participant data are now cleared.");
         location.reload();
       }
     };

@@ -234,6 +234,37 @@ function handleApi(req, res) {
     });
   }
 
+  // 3b. Reset All Game Data (Cross-Device Wipe)
+  if (pathname === "/api/reset" && (req.method === "POST" || req.method === "GET")) {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+    }
+    publicState.status = "LOBBY";
+    publicState.roundNum = 1;
+    publicState.questionIndex = 0;
+    publicState.currentQuestion = null;
+    publicState.releasedAnswer = null;
+    publicState.releasedTell = null;
+    publicState.releasedSource = null;
+    publicState.submittedCount = 0;
+    players = {};
+    broadcast();
+
+    const resetData = JSON.stringify({ type: "SESSION_RESET", state: publicState });
+    for (const client of sseClients) {
+      try {
+        client.write(`data: ${resetData}\n\n`);
+      } catch (e) {
+        sseClients.delete(client);
+      }
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, message: "All game history and participant data wiped." }));
+    return;
+  }
+
   // 4. Host Login
   if (pathname === "/api/host/login" && req.method === "POST") {
     readJson((err, body) => {
@@ -548,6 +579,10 @@ function handleApi(req, res) {
       }
 
       if (action === "RESET_SESSION") {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
         publicState.status = "LOBBY";
         publicState.roundNum = 1;
         publicState.questionIndex = 0;
@@ -558,8 +593,18 @@ function handleApi(req, res) {
         publicState.submittedCount = 0;
         players = {};
         broadcast();
+
+        const resetData = JSON.stringify({ type: "SESSION_RESET", state: publicState });
+        for (const client of sseClients) {
+          try {
+            client.write(`data: ${resetData}\n\n`);
+          } catch (e) {
+            sseClients.delete(client);
+          }
+        }
+
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: true }));
+        res.end(JSON.stringify({ success: true, message: "All game history and participant data wiped." }));
         return;
       }
 
