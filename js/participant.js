@@ -145,7 +145,7 @@
     document.getElementById("viewPractice").style.display = "none";
     document.getElementById("viewInGame").style.display = "flex";
     document.getElementById("headerXpPill").style.display = "flex";
-    document.getElementById("gameTeamNameLabel").textContent = `Team: ${teamName}`;
+    document.getElementById("gameTeamNameLabel").textContent = `Player: ${teamName}`;
   }
 
   function setupLeaveTeam() {
@@ -265,9 +265,14 @@
       document.getElementById("txtAudioA11y").textContent = q.audioAccessibilityNotes || "";
 
       const btnPlay = document.getElementById("btnPlayParticipantAudio");
+      if (!currentAudio) btnPlay.textContent = "Play audio clip";
       btnPlay.onclick = () => {
         if (currentAudio) currentAudio.pause();
+        if (!q.audioUrl) { btnPlay.textContent = "Recording missing. Please tell the host."; return; }
         currentAudio = new Audio(q.audioUrl);
+        currentAudio.preload = "auto";
+        currentAudio.volume = 1;
+        currentAudio.muted = false;
         btnPlay.textContent = "🔊 Playing...";
         currentAudio.onended = () => { btnPlay.textContent = "▶ Play Audio Clip"; };
         currentAudio.onerror = () => { btnPlay.textContent = "⚠️ Audio unavailable (see cues below)"; };
