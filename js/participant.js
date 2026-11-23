@@ -30,11 +30,15 @@
   let isSubmitting = false;
   let currentAudio = null;
   let timerInterval = null;
+  let initialized = false;
 
   /* --------------------------------------------------------------------------
      1. INITIALIZATION & RECONNECTION
      -------------------------------------------------------------------------- */
   function init() {
+    if (initialized) return;
+    initialized = true;
+
     setupRobotCheckbox();
     setupModals();
     setupJoinForm();
@@ -689,5 +693,19 @@
       .replace(/'/g, "&#039;");
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  window.GWICS_Participant = {
+    init: init
+  };
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (!window.GWICS_App || window.GWICS_App.getMode() === "player") {
+      init();
+    }
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!window.GWICS_App || window.GWICS_App.getMode() === "player") {
+        init();
+      }
+    });
+  }
 })();

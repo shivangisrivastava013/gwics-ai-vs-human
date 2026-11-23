@@ -9,7 +9,7 @@
   <!-- Fonts: Unbounded (Display), Plus Jakarta Sans (Body), JetBrains Mono (Code/Mono), Newsreader (Serif) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/game.css">
   <style>
@@ -52,7 +52,7 @@
       color: #FFFFFF;
     }
 
-    /* Change Team Link */
+    /* Change Team / Leave Link */
     .btn-change-team {
       background: transparent;
       border: none;
@@ -79,348 +79,811 @@
       box-shadow: 0 0 10px rgba(229, 184, 66, 0.3);
       flex-shrink: 0;
     }
-
-    /* Kahoot-inspired live participant badges */
-    .player-rank-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--charcoal-900);
-      border: 1px solid var(--charcoal-700);
-      padding: 4px 10px;
-      border-radius: var(--radius-pill);
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--gold-400);
-    }
   </style>
 </head>
-<body>
+<body class="mode-player">
 
-  <!-- Top App Navigation -->
-  <header class="app-header">
-    <div class="brand-badge">
-      <img src="assets/media/gwics_logo.png" alt="GWiCS Logo" class="brand-logo">
-      <div>
-        <div class="brand-title">
-          <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
-        </div>
-        <span class="brand-sub">GWiCS Showdown</span>
-      </div>
-    </div>
-
-    <div style="display:flex; align-items:center; gap:8px;">
-      <!-- Real-time Connection Status Badge -->
-      <div class="connection-badge connecting" id="participantConnBadge" title="Network Connection Status">
-        <span>●</span>
-        <span id="participantConnText">Connecting...</span>
-      </div>
-
-      <!-- Active Team XP Balance (Shown once joined) -->
-      <div class="xp-balance-pill" id="headerXpPill" style="display:none;" title="Click to view score history" role="button" tabindex="0">
-        <span>⚡</span>
-        <span id="headerXpVal">100 XP</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main App Shell -->
-  <main class="main-wrapper">
-
-    <!-- ====================================================================
-         VIEW 1: ENTRANCE SCREEN ("BOT OR NOT?")
-         ==================================================================== -->
-    <section class="entrance-card" id="viewEntrance">
-      <h1 class="entrance-title">
-        BOT OR <span style="color:var(--cyan-500)">NOT?</span>
-      </h1>
-      <p class="entrance-subtitle">
-        Think you can outsmart a machine? Presented by the <strong>Graduate Women in Computing Society</strong>.
-      </p>
-
-      <!-- Interactive Playful "I'm Not a Robot" Checkbox Panel -->
-      <div class="robot-checkbox-panel" id="robotPanel" role="checkbox" aria-checked="false" tabindex="0">
-        <div class="robot-checkbox-inner">
-          <div class="robot-box" id="robotBox">
-            <span id="robotCheckmark" style="display:none; font-weight:800; font-size:16px;">✓</span>
+  <!-- ======================================================================
+       ROLE-BASED VIEW 1: PLAYER MODE (Default)
+       ====================================================================== -->
+  <div id="appModePlayer" class="app-mode-container">
+    
+    <!-- Top Player Header -->
+    <header class="app-header">
+      <div class="brand-badge">
+        <img src="assets/media/gwics_logo.png" alt="GWiCS Logo" class="brand-logo">
+        <div>
+          <div class="brand-title">
+            <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
           </div>
-          <span class="robot-label">I'm not a robot</span>
+          <span class="brand-sub">GWiCS Showdown</span>
         </div>
-        <div class="robot-badge-icon">🤖</div>
       </div>
 
-      <!-- Playful Followup Revealed when checked -->
-      <div class="robot-followup" id="robotFollowup">
-        <strong>But can you spot one?</strong>
-        <span>Join the live challenge on your own phone. Every instinct counts. Your answers, your score.</span>
-      </div>
-
-      <!-- Join Form -->
-      <form class="join-form" id="joinForm">
-        <div class="form-group">
-          <label class="form-label" for="roomCodeInput">Game PIN / Room Code</label>
-          <input type="text" class="form-input" id="roomCodeInput" value="BOTORNOT" maxlength="12" placeholder="e.g. BOTORNOT" required>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <!-- Real-time Connection Status Badge -->
+        <div class="connection-badge connecting" id="participantConnBadge" title="Network Connection Status">
+          <span>●</span>
+          <span id="participantConnText">Connecting...</span>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="teamNameInput">Display Name</label>
-          <input type="text" class="form-input" id="teamNameInput" placeholder="Your name or nickname" maxlength="32" required>
-        </div>
-
-        <button type="submit" class="btn-join">
-          <span>Join Game</span>
+        <!-- Active Player XP Balance -->
+        <div class="xp-balance-pill" id="headerXpPill" style="display:none;" title="Click to view score history" role="button" tabindex="0">
           <span>⚡</span>
-        </button>
-      </form>
-
-      <!-- Secondary Links -->
-      <div class="entrance-secondary-links">
-        <button class="entrance-link" id="btnOpenRules">How to Play</button>
-        <button class="entrance-link" id="btnOpenPractice">Practice Sandbox</button>
-        <a href="host.html" class="entrance-link" style="color:var(--gold-400);">Host a game →</a>
-      </div>
-    </section>
-
-    <!-- ====================================================================
-         VIEW 2: PARTICIPANT IN-GAME SCREEN (Synchronized Live State)
-         ==================================================================== -->
-    <section class="game-screen" id="viewInGame" style="display:none;">
-      
-      <!-- Status & Timer Banner -->
-      <div class="status-banner">
-        <div>
-          <span class="status-round-tag" id="gameRoundTag">Round 1</span>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Player: Loading...</div>
-            <button class="btn-change-team" id="btnChangeTeam">Leave Game</button>
-          </div>
-        </div>
-        <div class="status-timer-pill" id="gameTimerPill">
-          <span>⏱</span>
-          <span id="gameTimerText">45s</span>
+          <span id="headerXpVal">100 XP</span>
         </div>
       </div>
+    </header>
 
-      <!-- Waiting / Lobby State -->
-      <div class="question-card" id="cardLobbyState" style="text-align:center; padding:40px 20px;">
-        <div style="font-size:40px; margin-bottom:12px;">🎮</div>
-        <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game!</h2>
-        <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 16px;">
-          Starting balance: <strong>100 XP</strong>. Look at the main screen—your name will appear on the audience display.
+    <!-- Main Player Shell -->
+    <main class="main-wrapper">
+
+      <!-- ENTRANCE SCREEN -->
+      <section class="entrance-card" id="viewEntrance">
+        <h1 class="entrance-title">
+          BOT OR <span style="color:var(--cyan-500)">NOT?</span>
+        </h1>
+        <p class="entrance-subtitle">
+          Think you can outsmart a machine? Presented by the <strong>Graduate Women in Computing Society</strong>.
         </p>
-        <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:6px 14px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700);">
-          Watching for the host to launch the first question...
+
+        <!-- Interactive "I'm Not a Robot" Checkbox Panel -->
+        <div class="robot-checkbox-panel" id="robotPanel" role="checkbox" aria-checked="false" tabindex="0">
+          <div class="robot-checkbox-inner">
+            <div class="robot-box" id="robotBox">
+              <span id="robotCheckmark" style="display:none; font-weight:800; font-size:16px;">✓</span>
+            </div>
+            <span class="robot-label">I'm not a robot</span>
+          </div>
+          <div class="robot-badge-icon">🤖</div>
         </div>
-      </div>
 
-      <!-- Active Question Card -->
-      <div class="question-card" id="cardActiveQuestion" style="display:none;">
-        <h2 class="question-title" id="qTitle">Question Title</h2>
-        <p class="question-prompt" id="qPrompt">Prompt description</p>
+        <!-- Followup Revealed when checked -->
+        <div class="robot-followup" id="robotFollowup">
+          <strong>But can you spot one?</strong>
+          <span>Join the live challenge on your own phone. Every instinct counts. Your answers, your score.</span>
+        </div>
 
-        <!-- Media Container: Image -->
-        <div class="question-media-frame" id="qImageFrame" style="display:none;">
-          <img id="qImageEl" src="" alt="Question visual">
-          <button class="btn-tap-zoom" id="btnZoomImage">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
-            Tap to Zoom
+        <!-- Join Form -->
+        <form class="join-form" id="joinForm">
+          <div class="form-group">
+            <label class="form-label" for="roomCodeInput">Game PIN / Room Code</label>
+            <input type="text" class="form-input" id="roomCodeInput" value="BOTORNOT" maxlength="12" placeholder="e.g. BOTORNOT" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="teamNameInput">Display Name</label>
+            <input type="text" class="form-input" id="teamNameInput" placeholder="Your name or nickname" maxlength="32" required>
+          </div>
+
+          <button type="submit" class="btn-join">
+            <span>Join Game</span>
+            <span>⚡</span>
           </button>
+        </form>
+
+        <!-- Secondary Links -->
+        <div class="entrance-secondary-links">
+          <button class="entrance-link" id="btnOpenRules">How to Play</button>
+          <button class="entrance-link" id="btnOpenPractice">Practice Sandbox</button>
         </div>
 
-        <!-- Media Container: Stacked Text Passages (Round 2) -->
-        <div class="stacked-passages" id="qTextFrame" style="display:none;">
-          <div class="passage-card" id="cardPassageA">
-            <span class="passage-tag">Passage A</span>
-            <div id="txtPassageA">Text passage A</div>
-          </div>
-          <div class="passage-card" id="cardPassageB">
-            <span class="passage-tag">Passage B</span>
-            <div id="txtPassageB">Text passage B</div>
-          </div>
+        <!-- Discrete Organizer Access Link -->
+        <div style="margin-top:22px; text-align:center;">
+          <a href="?mode=organizer" class="organizer-access-link" id="linkOrganizerAccess">
+            <span>🔐</span>
+            <span>Organizer Access</span>
+          </a>
         </div>
+      </section>
 
-        <!-- Media Container: Audio Player (Round 3) -->
-        <div class="audio-card-box" id="qAudioFrame" style="display:none;">
-          <div class="audio-script-quote" id="txtAudioScript">“Audio quote”</div>
-          <button class="btn-option" id="btnPlayParticipantAudio" style="margin:0 auto; padding:10px 20px; font-size:14px;">
-            ▶ Play Audio Clip
-          </button>
-          <div class="audio-a11y-notes" id="txtAudioA11y">Acoustic notes for accessibility</div>
-        </div>
-
-        <!-- Media Container: Round 4 Live Showdown Contenders -->
-        <div class="stacked-passages" id="qShowdownFrame" style="display:none;">
-          <div class="passage-card">
-            <span class="passage-tag">Contender A</span>
-            <div id="txtContenderA" style="white-space:pre-line;">Waiting for response...</div>
-          </div>
-          <div class="passage-card">
-            <span class="passage-tag">Contender B</span>
-            <div id="txtContenderB" style="white-space:pre-line;">Waiting for response...</div>
-          </div>
-          <div class="passage-card">
-            <span class="passage-tag">Contender C</span>
-            <div id="txtContenderC" style="white-space:pre-line;">Waiting for response...</div>
-          </div>
-        </div>
-
-        <!-- Paid Hint Action Bar (-25 XP) -->
-        <div class="hint-action-bar" id="hintActionBar">
-          <span style="font-size:13px; color:var(--text-muted);">Need a forensic clue?</span>
-          <button class="btn-hint-unlock" id="btnUnlockHint">
-            Unlock hint · 25 XP
-          </button>
-        </div>
-
-        <!-- Unlocked Hint Box (Shown once purchased) -->
-        <div class="unlocked-hint-box" id="unlockedHintBox" style="display:none;">
-          <strong style="color:var(--gold-400); display:block; margin-bottom:4px; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;">
-            💡 Unlocked Hint
-          </strong>
-          <span id="unlockedHintText">Clue text goes here.</span>
-        </div>
-
-        <!-- Answer Options Buttons -->
-        <div class="options-grid" id="optionsGrid">
-          <!-- Populated dynamically with large buttons -->
-        </div>
-
-        <!-- Submit Button -->
-        <div class="submit-action-bar" id="submitBar">
-          <button class="btn-submit-answer" id="btnSubmitAnswer" disabled>
-            Select an Answer
-          </button>
-        </div>
-
-        <!-- Submission Status Banners -->
-        <div class="submitted-waiting-banner" id="submittedBanner" style="display:none;">
-          <span>✓</span>
-          <span id="submittedBannerText">Answer submitted. Waiting for the host.</span>
-        </div>
-
-        <div class="voided-question-banner" id="voidedBanner" style="display:none;">
-          <span style="font-size:20px;">⚠️</span>
+      <!-- PARTICIPANT IN-GAME SCREEN (Synchronized Live State) -->
+      <section class="game-screen" id="viewInGame" style="display:none;">
+        
+        <!-- Status & Timer Banner -->
+        <div class="status-banner">
           <div>
-            <strong>Question Voided by Host</strong>
-            <div style="font-size:12px; color:var(--text-muted);">No points awarded. Any XP spent on hints for this question has been refunded.</div>
+            <span class="status-round-tag" id="gameRoundTag">Round 1</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="font-size:13px; font-weight:700;" id="gameTeamNameLabel">Player: Loading...</div>
+              <button class="btn-change-team" id="btnChangeTeam">Leave Game</button>
+            </div>
+          </div>
+          <div class="status-timer-pill" id="gameTimerPill">
+            <span>⏱</span>
+            <span id="gameTimerText">45s</span>
           </div>
         </div>
 
-        <!-- Released Result Box (Shown when host reveals) -->
-        <div class="released-result-box" id="releasedResultBox" style="display:none;">
-          <div class="released-header">
-            <span style="font-family:var(--font-display); font-weight:800; font-size:15px;" id="releasedVerdictBadge">
-              VERDICT
-            </span>
-            <span style="font-family:var(--font-mono); font-size:13px; font-weight:700;" id="releasedPointsDelta">
-              +100 XP
-            </span>
+        <!-- Waiting / Lobby State -->
+        <div class="question-card" id="cardLobbyState" style="text-align:center; padding:40px 20px;">
+          <div style="font-size:40px; margin-bottom:12px;">🎮</div>
+          <h2 style="font-family:var(--font-display); font-size:20px; margin-bottom:8px;">You're in the Game!</h2>
+          <p style="color:var(--text-muted); font-size:14px; max-width:400px; margin:0 auto 16px;">
+            Starting balance: <strong>100 XP</strong>. Look at the main screen—your name will appear on the audience display.
+          </p>
+          <div style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); background:var(--charcoal-900); display:inline-block; padding:6px 14px; border-radius:var(--radius-pill); border:1px solid var(--charcoal-700);">
+            Watching for the host to launch the first question...
           </div>
-          <div class="released-tell" id="releasedTellText">
-            Official explanation goes here.
+        </div>
+
+        <!-- Active Question Card -->
+        <div class="question-card" id="cardActiveQuestion" style="display:none;">
+          <h2 class="question-title" id="qTitle">Question Title</h2>
+          <p class="question-prompt" id="qPrompt">Prompt description</p>
+
+          <!-- Media Container: Image -->
+          <div class="question-media-frame" id="qImageFrame" style="display:none;">
+            <img id="qImageEl" src="" alt="Question visual">
+            <button class="btn-tap-zoom" id="btnZoomImage">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              Tap to Zoom
+            </button>
           </div>
+
+          <!-- Media Container: Stacked Text Passages (Round 2) -->
+          <div class="stacked-passages" id="qTextFrame" style="display:none;">
+            <div class="passage-card" id="cardPassageA">
+              <span class="passage-tag">Passage A</span>
+              <div id="txtPassageA">Text passage A</div>
+            </div>
+            <div class="passage-card" id="cardPassageB">
+              <span class="passage-tag">Passage B</span>
+              <div id="txtPassageB">Text passage B</div>
+            </div>
+          </div>
+
+          <!-- Media Container: Audio Player (Round 3) -->
+          <div class="audio-card-box" id="qAudioFrame" style="display:none;">
+            <div class="audio-script-quote" id="txtAudioScript">“Audio quote”</div>
+            <button class="btn-option" id="btnPlayParticipantAudio" style="margin:0 auto; padding:10px 20px; font-size:14px;">
+              ▶ Play Audio Clip
+            </button>
+            <div class="audio-a11y-notes" id="txtAudioA11y">Acoustic notes for accessibility</div>
+          </div>
+
+          <!-- Media Container: Round 4 Live Showdown Contenders -->
+          <div class="stacked-passages" id="qShowdownFrame" style="display:none;">
+            <div class="passage-card">
+              <span class="passage-tag">Contender A</span>
+              <div id="txtContenderA" style="white-space:pre-line;">Waiting for response...</div>
+            </div>
+            <div class="passage-card">
+              <span class="passage-tag">Contender B</span>
+              <div id="txtContenderB" style="white-space:pre-line;">Waiting for response...</div>
+            </div>
+            <div class="passage-card">
+              <span class="passage-tag">Contender C</span>
+              <div id="txtContenderC" style="white-space:pre-line;">Waiting for response...</div>
+            </div>
+          </div>
+
+          <!-- Paid Hint Action Bar (-25 XP) -->
+          <div class="hint-action-bar" id="hintActionBar">
+            <span style="font-size:13px; color:var(--text-muted);">Need a forensic clue?</span>
+            <button class="btn-hint-unlock" id="btnUnlockHint">
+              Unlock hint · 25 XP
+            </button>
+          </div>
+
+          <!-- Unlocked Hint Box (Shown once purchased) -->
+          <div class="unlocked-hint-box" id="unlockedHintBox" style="display:none;">
+            <strong style="color:var(--gold-400); display:block; margin-bottom:4px; font-family:var(--font-mono); font-size:11px; text-transform:uppercase;">
+              💡 Unlocked Hint
+            </strong>
+            <span id="unlockedHintText">Clue text goes here.</span>
+          </div>
+
+          <!-- Answer Options Buttons -->
+          <div class="options-grid" id="optionsGrid">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- Submit Button -->
+          <div class="submit-action-bar" id="submitBar">
+            <button class="btn-submit-answer" id="btnSubmitAnswer" disabled>
+              Select an Answer
+            </button>
+          </div>
+
+          <!-- Submission Status Banners -->
+          <div class="submitted-waiting-banner" id="submittedBanner" style="display:none;">
+            <span>✓</span>
+            <span id="submittedBannerText">Answer submitted. Waiting for the host.</span>
+          </div>
+
+          <div class="voided-question-banner" id="voidedBanner" style="display:none;">
+            <span style="font-size:20px;">⚠️</span>
+            <div>
+              <strong>Question Voided by Host</strong>
+              <div style="font-size:12px; color:var(--text-muted);">No points awarded. Any XP spent on hints for this question has been refunded.</div>
+            </div>
+          </div>
+
+          <!-- Released Result Box (Shown when host reveals) -->
+          <div class="released-result-box" id="releasedResultBox" style="display:none;">
+            <div class="released-header">
+              <span style="font-family:var(--font-display); font-weight:800; font-size:15px;" id="releasedVerdictBadge">
+                VERDICT
+              </span>
+              <span style="font-family:var(--font-mono); font-size:13px; font-weight:700;" id="releasedPointsDelta">
+                +100 XP
+              </span>
+            </div>
+            <div class="released-tell" id="releasedTellText">
+              Official explanation goes here.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRACTICE SANDBOX -->
+      <section class="game-screen" id="viewPractice" style="display:none;">
+        <div class="status-banner">
+          <div>
+            <span class="status-round-tag">Practice Sandbox</span>
+            <div style="font-size:13px; font-weight:700;">Zero-Risk Warmup</div>
+          </div>
+          <button class="entrance-link" id="btnExitPractice" style="font-size:12px;">← Exit Practice</button>
+        </div>
+
+        <div class="question-card" id="practiceContainer">
+          <!-- Rendered by js/participant.js using GWICS_PRACTICE_BANK -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modals -->
+    <!-- 1. Hint Purchase Confirmation Modal -->
+    <div class="modal-overlay" id="hintModal" role="dialog" aria-modal="true" aria-labelledby="hintModalTitle">
+      <div class="modal-dialog">
+        <h3 id="hintModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Unlock Forensic Hint?</h3>
+        <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;" id="hintModalText">
+          Spend 25 XP on a hint? Your balance will change from 100 to 75 XP.
+        </p>
+        <div style="display:flex; gap:12px;">
+          <button class="btn-join" style="flex:1; padding:12px;" id="btnConfirmHint">
+            Confirm (-25 XP)
+          </button>
+          <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelHint">
+            Cancel
+          </button>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- ====================================================================
-         VIEW 3: PRACTICE SANDBOX (Dedicated separate practice bank)
-         ==================================================================== -->
-    <section class="game-screen" id="viewPractice" style="display:none;">
-      <div class="status-banner">
+    <!-- 2. Image Zoom Modal -->
+    <div class="modal-overlay" id="zoomModal" role="dialog" aria-modal="true">
+      <div class="modal-dialog" style="max-width:92vw; padding:12px; background:#000;">
+        <button class="modal-close" id="btnCloseZoom" aria-label="Close image zoom">✕</button>
+        <img id="zoomModalImg" src="" style="width:100%; height:auto; max-height:82vh; object-fit:contain;" alt="Zoomed view">
+      </div>
+    </div>
+
+    <!-- 3. Rules Modal -->
+    <div class="modal-overlay" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
+      <div class="modal-dialog">
+        <button class="modal-close" id="btnCloseRules" aria-label="Close rules">✕</button>
+        <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Rules & Scoring</div>
+        <h3 id="rulesModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:12px;">How The Showdown Works</h3>
+        <ul style="padding-left:18px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:10px; line-height:1.6;">
+          <li><strong>Individual Play:</strong> Every attendee plays on their own phone with their own name and submits their own choices.</li>
+          <li><strong>XP Economy:</strong> You begin with <strong>100 XP</strong>. Each correct answer awards <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
+          <li><strong>Paid Hints:</strong> Need a forensic clue? Unlock 1 hint per question for <strong>25 XP</strong>. The clue is private to your phone.</li>
+          <li><strong>Locked Submissions:</strong> Once you tap your choice, your answer is sealed until the host reveals the verdict.</li>
+          <li><strong>Standings:</strong> See how your human instincts rank on the live leaderboard!</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4. Score History Modal -->
+    <div class="modal-overlay" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+      <div class="modal-dialog">
+        <button class="modal-close" id="btnCloseHistory" aria-label="Close score history">✕</button>
+        <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Your Record</div>
+        <h3 id="historyModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">Your XP Balance & History</h3>
+        <div id="historyList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; font-size:13px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Leave Confirmation Modal -->
+    <div class="modal-overlay" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveModalTitle">
+      <div class="modal-dialog">
+        <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave the Game?</h3>
+        <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
+          Your progress is saved on this device. You can rejoin at any time with the same name.
+        </p>
+        <div style="display:flex; gap:12px;">
+          <button class="btn-join" style="flex:1; padding:12px; background:var(--color-danger); border-color:var(--color-danger);" id="btnConfirmLeave">
+            Leave Game
+          </button>
+          <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelLeave">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ======================================================================
+       ROLE-BASED VIEW 2: ORGANIZER MODE (Protected Mission Control)
+       ====================================================================== -->
+  <div id="appModeOrganizer" class="app-mode-container" style="display:none;">
+    
+    <!-- Top Host Navigation -->
+    <header class="app-header">
+      <div class="brand-badge">
+        <img src="assets/media/gwics_logo.png" alt="GWiCS" class="brand-logo" style="width:38px; height:38px; padding:2px; margin-right:8px;">
         <div>
-          <span class="status-round-tag">Practice Sandbox</span>
-          <div style="font-size:13px; font-weight:700;">Zero-Risk Warmup</div>
+          <div class="brand-title">
+            <span class="gold">HOST</span> DASHBOARD
+          </div>
+          <span class="brand-sub">GWiCS Showdown Controller</span>
         </div>
-        <button class="entrance-link" id="btnExitPractice" style="font-size:12px;">← Exit Practice</button>
       </div>
 
-      <div class="question-card" id="practiceContainer">
-        <!-- Rendered by js/participant.js using GWICS_PRACTICE_BANK -->
-      </div>
-    </section>
-
-  </main>
-
-  <!-- ====================================================================
-       MODALS
-       ==================================================================== -->
-  <!-- 1. Hint Purchase Confirmation Modal -->
-  <div class="modal-overlay" id="hintModal" role="dialog" aria-modal="true" aria-labelledby="hintModalTitle">
-    <div class="modal-dialog">
-      <h3 id="hintModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Unlock Forensic Hint?</h3>
-      <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;" id="hintModalText">
-        Spend 25 XP on a hint? Your balance will change from 100 to 75 XP.
-      </p>
-      <div style="display:flex; gap:12px;">
-        <button class="btn-join" style="flex:1; padding:12px;" id="btnConfirmHint">
-          Confirm (-25 XP)
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="connection-badge connecting" id="hostConnBadge">
+          <span>●</span> <span id="hostConnText">Initializing...</span>
+        </div>
+        <button class="btn-host-action" id="btnHostPresent" style="background:var(--gold-400); color:#000; font-weight:700; padding:6px 16px; font-size:12px; cursor:pointer;" title="Launch Audience Presentation Screen in New Window">
+          📺 Present ↗
         </button>
-        <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelHint">
-          Cancel
+        <a href="?mode=player" target="_blank" class="btn-host-action" style="padding:6px 14px; font-size:12px; text-decoration:none;">
+          📱 Player View ↗
+        </a>
+        <button class="btn-host-action" id="btnHostSignOut" style="padding:6px 12px; font-size:12px; color:var(--text-muted);" title="Sign out of Host Mission Control">
+          🔒 Sign Out
         </button>
       </div>
-    </div>
-  </div>
+    </header>
 
-  <!-- 2. Image Zoom Modal -->
-  <div class="modal-overlay" id="zoomModal" role="dialog" aria-modal="true">
-    <div class="modal-dialog" style="max-width:92vw; padding:12px; background:#000;">
-      <button class="modal-close" id="btnCloseZoom" aria-label="Close image zoom">✕</button>
-      <img id="zoomModalImg" src="" style="width:100%; height:auto; max-height:82vh; object-fit:contain;" alt="Zoomed view">
-    </div>
-  </div>
+    <!-- AUTHENTICATION & PACK LOADER GATE -->
+    <div id="viewHostGate">
+      <div class="host-gate-card">
+        <div style="font-size:40px; margin-bottom:12px;">🔐</div>
+        <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:8px;">Organizer Mission Control</h2>
+        <p style="color:var(--text-muted); font-size:13px; line-height:1.5; margin-bottom:24px;">
+          Enter your organizer credential and load the local <strong>competition_pack.json</strong> from your organizer vault. Answers remain strictly on your laptop.
+        </p>
 
-  <!-- 3. Rules Modal -->
-  <div class="modal-overlay" id="rulesModal" role="dialog" aria-modal="true" aria-labelledby="rulesModalTitle">
-    <div class="modal-dialog">
-      <button class="modal-close" id="btnCloseRules" aria-label="Close rules">✕</button>
-      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Rules & Scoring</div>
-      <h3 id="rulesModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:12px;">How The Showdown Works</h3>
-      <ul style="padding-left:18px; font-size:14px; color:var(--text-muted); display:flex; flex-direction:column; gap:10px; line-height:1.6;">
-        <li><strong>Individual Play:</strong> Every attendee plays on their own phone with their own name and submits their own choices.</li>
-        <li><strong>XP Economy:</strong> You begin with <strong>100 XP</strong>. Each correct answer awards <strong>+100 XP</strong>. Incorrect answers earn <strong>0 XP</strong>.</li>
-        <li><strong>Paid Hints:</strong> Need a forensic clue? Unlock 1 hint per question for <strong>25 XP</strong>. The clue is private to your phone.</li>
-        <li><strong>Locked Submissions:</strong> Once you tap your choice, your answer is sealed until the host reveals the verdict.</li>
-        <li><strong>Standings:</strong> See how your human instincts rank on the live leaderboard!</li>
-      </ul>
-    </div>
-  </div>
+        <form id="hostAuthForm">
+          <div class="form-group" style="text-align:left; margin-bottom:16px;">
+            <label class="form-label" for="hostRoomInput">Game PIN / Room Code</label>
+            <input type="text" class="form-input" id="hostRoomInput" value="BOTORNOT" maxlength="12" required>
+          </div>
 
-  <!-- 4. Score History Modal -->
-  <div class="modal-overlay" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
-    <div class="modal-dialog">
-      <button class="modal-close" id="btnCloseHistory" aria-label="Close score history">✕</button>
-      <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:4px;">Your Record</div>
-      <h3 id="historyModalTitle" style="font-family:var(--font-display); font-size:20px; margin-bottom:14px;">Your XP Balance & History</h3>
-      <div id="historyList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; font-size:13px;">
-        <!-- Populated dynamically -->
+          <div class="form-group" style="text-align:left; margin-bottom:16px;">
+            <label class="form-label" for="hostPinInput">Organizer Credential</label>
+            <input type="password" class="form-input" id="hostPinInput" placeholder="Enter Organizer Passcode" required>
+          </div>
+
+          <div class="form-group" style="text-align:left; margin-bottom:20px;">
+            <label class="form-label" for="packFileInput">Local Competition Pack (.json)</label>
+            <input type="file" id="packFileInput" accept=".json" class="form-input" style="padding:8px; font-size:12px;" required>
+            <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+              Select <code>local_organizer_vault/competition_pack.json</code>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-join" style="width:100%; margin-top:0;">
+            Unlock Mission Control & Start
+          </button>
+        </form>
+
+        <div style="margin-top:20px;">
+          <a href="?mode=player" style="font-family:var(--font-mono); font-size:12px; color:var(--text-dim); text-decoration:none;">
+            ← Return to Player Join Screen
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- HOST MISSION CONTROL DASHBOARD (Protected) -->
+    <div class="host-layout" id="viewHostDashboard" style="display:none;">
+
+      <!-- Left Sidebar: Question Navigation & Audio Test -->
+      <aside class="host-sidebar">
+        
+        <!-- Session Status Panel -->
+        <div class="question-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase;">Live Room</span>
+            <span class="status-timer-pill" style="font-size:11px;" id="hostRoomStatusBadge">LOBBY</span>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:24px; font-weight:800; color:#FFFFFF; margin-bottom:4px;" id="hostRoomCodeLabel">
+            BOTORNOT
+          </div>
+          <div style="font-size:13px; color:var(--text-muted);">
+            <span id="hostTeamsCountLabel">0</span> Players Connected
+          </div>
+        </div>
+
+        <!-- Round Selector -->
+        <div class="question-card">
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); text-transform:uppercase; margin-bottom:10px;">
+            Select Round
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;" id="roundTabs">
+            <button class="btn-host-action active" style="padding:4px 10px; font-size:12px;" data-r="1">R1: Images</button>
+            <button class="btn-host-action" style="padding:4px 10px; font-size:12px;" data-r="2">R2: Literature</button>
+            <button class="btn-host-action" style="padding:4px 10px; font-size:12px;" data-r="3">R3: Audio</button>
+            <button class="btn-host-action" style="padding:4px 10px; font-size:12px;" data-r="4">R4: Showdown</button>
+          </div>
+
+          <div class="host-q-nav" id="hostQList">
+            <!-- Dynamically populated with question list -->
+          </div>
+        </div>
+
+        <!-- Quick Audio Check -->
+        <div class="question-card">
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim); text-transform:uppercase; margin-bottom:8px;">
+            Audio Check (Laptop Aux)
+          </div>
+          <button class="btn-host-action" id="btnTestSound" style="width:100%; justify-content:center;">
+            🔊 Test Audio Output
+          </button>
+        </div>
+
+        <!-- Export & Reset -->
+        <div class="question-card">
+          <button class="btn-host-action" id="btnExportCsv" style="width:100%; justify-content:center; margin-bottom:8px;">
+            📥 Export Results (.csv)
+          </button>
+          <button class="btn-host-action" id="btnResetAll" style="width:100%; justify-content:center; color:var(--color-danger); border-color:var(--color-danger);">
+            ⚠️ Emergency Reset Session
+          </button>
+        </div>
+      </aside>
+
+      <!-- Right Main Stage: Active Question Mission Control -->
+      <main class="host-main-stage">
+        
+        <!-- Active Question Banner & Controls -->
+        <div class="question-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <span style="font-family:var(--font-mono); font-size:12px; color:var(--gold-400); text-transform:uppercase;" id="hostCurrentRoundLabel">
+                Round 1 · Visual Turing Test
+              </span>
+              <h2 class="question-title" style="margin-top:4px;" id="hostQTitle">Select a Question to Begin</h2>
+            </div>
+            
+            <div class="status-timer-pill" style="font-size:18px; padding:6px 16px;" id="hostTimerPill">
+              <span>⏱</span>
+              <span id="hostTimerVal">45s</span>
+            </div>
+          </div>
+
+          <!-- Controls Action Strip -->
+          <div class="host-action-strip" style="margin-bottom:20px;">
+            <button class="btn-host-action btn-host-primary" id="btnHostStartQ">
+              ▶ Launch Question & Start Timer
+            </button>
+            <button class="btn-host-action" id="btnHostPauseTimer">
+              ⏸ Pause / Resume
+            </button>
+            <button class="btn-host-action" id="btnHostLock">
+              🔒 Lock Submissions
+            </button>
+            <button class="btn-host-action" id="btnHostReveal">
+              ⚡ Reveal Answer & Tell
+            </button>
+            <button class="btn-host-action" id="btnHostShowLeaderboard">
+              🏆 Show Leaderboard
+            </button>
+            <button class="btn-host-action" id="btnHostVoid" style="color:var(--color-danger); border-color:var(--color-danger);">
+              ✕ Void Question & Refund Hints
+            </button>
+          </div>
+
+          <!-- Submissions Monitor -->
+          <div style="display:flex; align-items:center; justify-content:space-between; background:var(--charcoal-900); padding:12px 16px; border-radius:var(--radius-md); margin-bottom:20px; font-family:var(--font-mono); font-size:13px;">
+            <div>
+              Submissions: <strong style="color:var(--gold-400);" id="hostSubmissionsCount">0 / 0 Players</strong>
+            </div>
+            <div id="hostSubmissionStatusText" style="color:var(--text-dim);">Ready to launch</div>
+          </div>
+
+          <!-- Audio Preview & Playback Panel -->
+          <div class="question-card" id="hostAudioCard" style="display:none; margin-bottom:20px; background:var(--charcoal-900); border:1px solid var(--gold-500);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase;">
+                🔊 Question Audio Preview & Playback (Laptop / Aux)
+              </div>
+              <div id="hostAudioStatus" style="font-family:var(--font-mono); font-size:12px; color:var(--text-dim);">Ready</div>
+            </div>
+            <audio id="hostAudioEl" controls preload="metadata" style="width:100%;"></audio>
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button type="button" class="btn-host-action" id="btnHostPlayAudio" style="padding:4px 12px; font-size:11px;">▶ Play / Pause</button>
+              <button type="button" class="btn-host-action" id="btnHostReplayAudio" style="padding:4px 12px; font-size:11px;">↺ Replay from Start</button>
+            </div>
+          </div>
+
+          <!-- Secret Answer & Tell Box (Visible ONLY to Host) -->
+          <div class="host-secret-vault-box" id="hostSecretVault">
+            <div class="host-secret-badge">SECRET ANSWER KEY (HOST LAPTOP ONLY)</div>
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+              <span style="font-family:var(--font-display); font-size:18px; font-weight:800; color:#FFFFFF;" id="hostSecretAnswer">
+                Answer: AI
+              </span>
+              <span style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);" id="hostSecretSource">
+                Source verified
+              </span>
+            </div>
+            <div style="font-size:14px; color:var(--text-main); line-height:1.5;" id="hostSecretTell">
+              Official explanation for the reveal will appear here.
+            </div>
+          </div>
+        </div>
+
+        <!-- Round 4 Live Showdown Contender Response Editor -->
+        <div class="question-card" id="hostShowdownEditor" style="display:none; border:2px solid var(--cyan-500);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div>
+              <span style="font-family:var(--font-mono); font-size:11px; color:var(--cyan-400); text-transform:uppercase;">Round 4 Stage Manager</span>
+              <h3 style="font-family:var(--font-display); font-size:16px; margin:2px 0 0;">Live Showdown Responses (Duel)</h3>
+            </div>
+            <button type="button" class="btn-host-action" id="btnShuffleShowdownAi" style="font-size:12px; border-color:var(--cyan-500); color:var(--cyan-400);">
+              🎲 Randomize AI Slot (<strong id="hostShowdownAiSlotLabel" style="color:#FFF;">Contender B</strong>)
+            </button>
+          </div>
+
+          <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+            Collect the 3 responses (two human volunteers + one AI model). Type or paste them below. The letter assigned to the AI is randomized so the audience cannot guess by habit.
+          </p>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <label class="form-label" style="font-size:11px; margin:0;" for="hostContenderAText">Contender A Text</label>
+                <span id="labelContenderAType" style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">HUMAN</span>
+              </div>
+              <textarea class="form-input" id="hostContenderAText" rows="4" placeholder="Enter Contender A response text..."></textarea>
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <label class="form-label" style="font-size:11px; margin:0;" for="hostContenderBText">Contender B Text</label>
+                <span id="labelContenderBType" style="font-family:var(--font-mono); font-size:10px; color:var(--cyan-400);">AI MODEL</span>
+              </div>
+              <textarea class="form-input" id="hostContenderBText" rows="4" placeholder="Enter Contender B response text..."></textarea>
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                <label class="form-label" style="font-size:11px; margin:0;" for="hostContenderCText">Contender C Text</label>
+                <span id="labelContenderCType" style="font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">HUMAN</span>
+              </div>
+              <textarea class="form-input" id="hostContenderCText" rows="4" placeholder="Enter Contender C response text..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connected Players & Live Leaderboard -->
+        <div class="question-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3 style="font-family:var(--font-display); font-size:18px;">Connected Players & XP Leaderboard</h3>
+            <button class="btn-host-action" id="btnRefreshTeams" style="padding:4px 12px; font-size:11px;">Refresh</button>
+          </div>
+
+          <table class="host-teams-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Display Name</th>
+                <th>Current Answer</th>
+                <th>XP Balance</th>
+                <th>Hint Used</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hostTeamsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- Score Override Modal -->
+    <div class="modal-overlay" id="scoreModal">
+      <div class="modal-dialog">
+        <button class="modal-close" id="btnCloseScoreModal">✕</button>
+        <h3 style="font-family:var(--font-display); font-size:18px; margin-bottom:12px;">Manual XP Adjustment</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+          Adjust score for <strong id="scoreModalTeamName">Player</strong>. Every manual change is recorded in the score history.
+        </p>
+
+        <form id="scoreOverrideForm">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" for="scoreDeltaInput">XP Change (e.g. +50 or -25)</label>
+            <input type="number" class="form-input" id="scoreDeltaInput" placeholder="+50" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom:18px;">
+            <label class="form-label" for="scoreReasonInput">Recorded Reason</label>
+            <input type="text" class="form-input" id="scoreReasonInput" placeholder="e.g., Showdown crowd favorite (+50 XP)" required>
+          </div>
+
+          <button type="submit" class="btn-join" style="width:100%; margin:0;">
+            Apply XP Adjustment
+          </button>
+        </form>
       </div>
     </div>
   </div>
 
-  <!-- 5. Leave / Change Team Confirmation Modal -->
-  <div class="modal-overlay" id="leaveModal" role="dialog" aria-modal="true" aria-labelledby="leaveModalTitle">
-    <div class="modal-dialog">
-      <h3 id="leaveModalTitle" style="font-family:var(--font-display); font-size:18px; margin-bottom:8px;">Leave the Game?</h3>
-      <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">
-        Your progress is saved on this device. You can rejoin at any time with the same name.
-      </p>
-      <div style="display:flex; gap:12px;">
-        <button class="btn-join" style="flex:1; padding:12px; background:var(--color-danger); border-color:var(--color-danger);" id="btnConfirmLeave">
-          Leave Game
-        </button>
-        <button class="btn-option" style="flex:1; padding:12px; margin:0;" id="btnCancelLeave">
-          Cancel
-        </button>
+
+  <!-- ======================================================================
+       ROLE-BASED VIEW 3: PRESENTATION MODE (Audience Stage Display)
+       ====================================================================== -->
+  <div id="appModePresentation" class="app-mode-container projector-stage" style="display:none;">
+    
+    <!-- Fullscreen Toggle Button -->
+    <button class="btn btn-outline-charcoal btn-sm fs-toggle-btn" id="btnFullscreen" title="Toggle Fullscreen (F)">
+      ⛶ Fullscreen
+    </button>
+
+    <!-- Row 1: Top Stage Header (auto) -->
+    <header class="stage-header">
+      <div class="stage-brand">
+        <img src="assets/media/gwics_logo.png" alt="GWiCS" class="stage-brand-logo">
+        <span class="gold">BOT</span>&nbsp;OR&nbsp;<span class="cyan">NOT?</span>
+        <span class="stage-brand-sub">GWiCS Showdown</span>
       </div>
-    </div>
+
+      <div class="stage-header-right">
+        <div class="stage-conn-badge connecting" id="stageConnBadge">
+          <span>●</span> <span id="stageConnText">Connecting...</span>
+        </div>
+        <div class="stage-timer-box" id="stageTimerBox">
+          <span>⏱</span>
+          <span id="stageTimerNum">45s</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Row 2: Main Dynamic Stage Canvas (minmax(0, 1fr)) -->
+    <main class="stage-canvas" id="stageCanvas">
+      
+      <!-- 1. LOBBY VIEW -->
+      <div class="projector-lobby" id="stageLobbyView">
+        <h1 class="lobby-big-title">
+          CAN YOU SPOT <span style="color:var(--cyan-500);">THE BOT?</span>
+        </h1>
+
+        <div class="lobby-join-instructions">
+          <div class="lobby-instructions-tag">
+            Scan, join, and play on your own phone
+          </div>
+          <div class="lobby-url-text">
+            shivangisrivastava013.github.io/gwics-ai-vs-human
+          </div>
+          <div class="lobby-room-code-tag" id="stageRoomCode">
+            ROOM: BOTORNOT
+          </div>
+        </div>
+
+        <div class="lobby-teams-counter" id="stageTeamsCount">
+          0 Players Ready
+        </div>
+      </div>
+
+      <!-- 2. QUESTION VIEW (Synchronized with Host) -->
+      <div class="projector-question-layout" id="stageQuestionView" style="display:none;">
+        <div class="projector-q-header">
+          <h2 class="projector-q-head" id="stageQTitle">Question Title</h2>
+          <div class="projector-q-prompt" id="stageQPrompt">Prompt description</div>
+        </div>
+
+        <!-- Media Stage 1: Image (Contained & Centered) -->
+        <div class="projector-media-container" id="stageImgContainer" style="display:none;">
+          <img id="stageImgEl" src="" alt="Projector visual">
+        </div>
+
+        <!-- Media Stage 2: Literature Duo (Side-by-side with bounded text) -->
+        <div class="projector-text-duo" id="stageTextContainer" style="display:none;">
+          <div class="projector-poem-card">
+            <span class="projector-poem-tag">Passage A</span>
+            <div class="projector-passage-text" id="stagePassageA">Passage A</div>
+          </div>
+          <div class="projector-poem-card">
+            <span class="projector-poem-tag">Passage B</span>
+            <div class="projector-passage-text" id="stagePassageB">Passage B</div>
+          </div>
+        </div>
+
+        <!-- Media Stage 3: Audio Voice Check -->
+        <div class="projector-audio-view" id="stageAudioContainer" style="display:none;">
+          <audio id="stageAudioPlayer" controls preload="metadata" aria-label="Room audio challenge" style="width:min(600px, 85%); margin-bottom:8px;"></audio>
+          <div id="stageAudioStatus" style="font-family:var(--font-mono); font-size:clamp(12px, 1.4vh, 16px); color:var(--gold-400); margin-bottom:8px;"></div>
+          <div class="audio-big-orb" id="stageAudioOrb">
+            <span>Clip</span>
+          </div>
+          <div class="projector-audio-script" id="stageAudioScript">
+            “Audio transcript”
+          </div>
+        </div>
+
+        <!-- Media Stage 4: Round 4 Live Showdown (3 Neutral Cards) -->
+        <div class="projector-showdown-grid" id="stageShowdownContainer" style="display:none;">
+          <div class="projector-showdown-card">
+            <div class="projector-poem-tag">Contender A</div>
+            <div class="projector-showdown-text" id="stageContenderA">Waiting for response...</div>
+          </div>
+          <div class="projector-showdown-card">
+            <div class="projector-poem-tag">Contender B</div>
+            <div class="projector-showdown-text" id="stageContenderB">Waiting for response...</div>
+          </div>
+          <div class="projector-showdown-card">
+            <div class="projector-poem-tag">Contender C</div>
+            <div class="projector-showdown-text" id="stageContenderC">Waiting for response...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. GRAND REVEAL BANNER (Appears when host triggers reveal) -->
+      <div class="stage-reveal-overlay" id="stageRevealOverlay" style="display:none;">
+        <div class="reveal-badge-giant" id="stageRevealBadge">AI GENERATED</div>
+        <div class="reveal-tell-giant" id="stageRevealTell">
+          Explanation of forensic tell.
+        </div>
+      </div>
+
+      <!-- 4. VOIDED BANNER -->
+      <div class="stage-reveal-overlay" id="stageVoidOverlay" style="display:none; border-color:var(--color-danger); box-shadow:0 0 50px rgba(239, 68, 68, 0.4);">
+        <div class="reveal-badge-giant" style="background:var(--color-danger); color:#FFFFFF;">QUESTION VOIDED</div>
+        <div class="reveal-tell-giant">
+          This question has been voided by the host. No points awarded or deducted. All hint XP refunded.
+        </div>
+      </div>
+
+      <!-- 5. LEADERBOARD VIEW -->
+      <div class="projector-lobby" id="stageLeaderboardView" style="display:none;">
+        <h2 class="leaderboard-title">
+          🏆 Official Standings
+        </h2>
+        <div class="stage-leaderboard-grid" id="stageLeaderboardList">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Row 3: Bottom Stage Footer (auto) -->
+    <footer class="stage-footer">
+      <div id="stageRoundLabel">Round 1: Real or AI?</div>
+
+      <div class="submissions-meter" id="stageMeterBox">
+        <span>Submitted:</span>
+        <div class="submissions-bar">
+          <div class="submissions-fill" id="stageSubmissionsFill" style="width:0%;"></div>
+        </div>
+        <span id="stageSubmissionsCount">0 / 0</span>
+      </div>
+
+      <div>Graduate Women in Computing Society</div>
+    </footer>
+
+    <!-- Subtle Floating Exit Link for Stage Display -->
+    <a href="?mode=player" style="position:fixed; bottom:8px; right:12px; font-family:var(--font-mono); font-size:11px; color:var(--text-dim); text-decoration:none; opacity:0.3; z-index:999;" title="Exit Presentation Mode">← Exit</a>
   </div>
 
-  <!-- Scripts: PeerJS CDN for WebRTC cross-device networking -->
+  <!-- Scripts: Networking, Modules, and Coordinator -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="js/practice_bank.js"></script>
+  <script src="js/firebase_config.js"></script>
   <script src="js/sync_engine.js"></script>
   <script src="js/participant.js"></script>
+  <script src="js/host.js"></script>
+  <script src="js/projector.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

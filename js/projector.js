@@ -8,8 +8,12 @@
 
   const Engine = window.GWICS_SyncEngine;
   let timerInterval = null;
+  let initialized = false;
 
   function init() {
+    if (initialized) return;
+    initialized = true;
+
     setupFullscreen();
 
     // Check for room code query param: ?room=BOTORNOT
@@ -275,5 +279,19 @@
       .replace(/'/g, "&#039;");
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  window.GWICS_Projector = {
+    init: init
+  };
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (window.GWICS_App && window.GWICS_App.getMode() === "presentation") {
+      init();
+    }
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.GWICS_App && window.GWICS_App.getMode() === "presentation") {
+        init();
+      }
+    });
+  }
 })();

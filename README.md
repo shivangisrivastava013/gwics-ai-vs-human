@@ -4,23 +4,28 @@ Official live multi-device competition platform for **BOT OR NOT? The Ultimate S
 
 ---
 
-## 🏛️ Architecture: The Three Connected Views
+## 🏛️ Architecture: One Consolidated App with Three Role-Based Modes
 
-| View | Target URL | Who Uses It | What It Shows |
+The application runs entirely from a single unified entry URL (`https://shivangisrivastava013.github.io/gwics-ai-vs-human/`):
+
+| Mode | Entry Route | Who Uses It | What Appears |
 | :--- | :--- | :--- | :--- |
-| **📱 Participant View** | [`index.html`](index.html) | Table Team Captains (Mobile) | Playful Robot Checkbox gate, Join session, active question, high-res zoomable media, answer buttons, 25 XP paid hints with modal confirmation, submission locking ("Waiting for host"), revealed verdicts, and score history. |
-| **📽️ Projector Stage** | [`projector.html`](projector.html) | Main Hall Screen (16:9) | Giant room code, current question & media, countdown timer, live submitted count, grand reveal verdict, animated leaderboard. Zero host controls or answer keys. |
-| **🔐 Private Host Dashboard** | [`host.html`](host.html) | Event Organizer (Laptop Only) | Passcode protected, local pack file loader, question launcher, secret answer key & forensic tells, pause/resume, lock submissions, manual XP adjustments, neutral audio check, void question (with hint refunds), and CSV export. |
+| **📱 Player** | Default entry (`/` or `?mode=player`) | Attendees on their phones | Clean "Join Game" screen with Game PIN and display name, active questions, zoomable media, answer buttons, 25 XP paid hints with modal confirmation, locked submissions, revealed verdicts, personal XP and rank. Reconnects and persists across phone refreshes. |
+| **🔐 Organizer** | Click "Organizer Access" or `?mode=organizer` | Event Organizer (Laptop) | Secure authentication gate (backend / cryptographic verification), private `competition_pack.json` loader from local vault, question launcher, secret answer key & forensic tells, pause/resume timers, lock submissions, manual XP adjustments, neutral audio check, void question (with hint refunds), and CSV export. Includes "📺 Present ↗" button to launch presentation stage in a new window. |
+| **📽️ Presentation** | Launched via Host "Present" button or `?mode=presentation&room=BOTORNOT` | Main Hall Projector Display (16:9) | Viewport-height-constrained stage with giant room code, join URL, current question & media, countdown timer, live submitted count, grand reveal verdict, animated leaderboard, and designated room audio player. Receives public game state only with zero host controls or answer keys. |
+
+> **Backward Compatibility:** Visiting `host.html` or `projector.html` automatically and instantly redirects to the corresponding consolidated application view (`index.html?mode=organizer` and `index.html?mode=presentation`).
 
 ---
 
 ## 🔒 Zero-Leak Security & Organizer Vault
 
-* **Organizer Authentication:** Host dashboard is protected by the organizer passcode (`GWICS2026!`).
+* **Secure Organizer Authentication:** The organizer signs in with their organizer credential. Authentication is verified via backend (Firebase Auth when configured) or a salted cryptographic one-way SHA-256 hash digest. **No plaintext password exists in downloadable client code.**
 * **Public GitHub Pages Static Safety:** GitHub Pages hosts only public static assets. **No confidential answer keys, tells, or organizer download packs are committed to the public GitHub repository.**
-* **Local Pack Loader:** The organizer keeps `local_organizer_vault/competition_pack.json` locally on their laptop. Upon logging into `host.html`, the organizer selects this file via the secure file picker. The competition pack is parsed locally in browser memory (`FileReader`) and never transmitted across the public internet.
-* **Payload Sanitation:** The host engine strips answers (`ans`) and explanations (`tell`) before broadcasting any active question to participants or projector.
-* **Round 4 Live Showdown Privacy:** Contender options are strictly neutral (`Contender A`, `Contender B`, `Contender C` with no labels or color hints). The host dashboard features an automatic randomizer (`🎲 Randomize AI Slot`) that rotates which letter represents the AI model for each duel, keeping both the emcee and audience unbiased.
+* **Local Pack Loader:** The organizer keeps `local_organizer_vault/competition_pack.json` locally on their laptop. Upon logging into organizer mode, the organizer selects this file via the secure file picker. The competition pack is parsed locally in browser memory (`FileReader`) and never transmitted across the public internet.
+* **Payload Sanitation:** The host engine strips answers (`ans`), explanations (`tell`), and unrevealed questions before broadcasting any state to participants or the presentation screen.
+* **URL Parameter Defense:** Passing `?mode=organizer` or `#organizer` acts purely as visual navigation to the login gate. It does not authorize or unlock mission control without valid organizer credentials and the local pack file.
+* **Round 4 Live Showdown Privacy:** Contender options are strictly neutral (`Contender A is AI`, `Contender B is AI`, `Contender C is AI`). The host dashboard automatically randomizes which letter represents the AI model for each duel, keeping both the emcee and audience unbiased.
 
 ---
 

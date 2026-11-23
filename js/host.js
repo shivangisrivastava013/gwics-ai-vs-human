@@ -7,16 +7,54 @@
   "use strict";
 
   const Engine = window.GWICS_SyncEngine;
-  const ORGANIZER_PASSCODE = "GWICS2026!"; // Official GWiCS Organizer Secret Passcode
+  // Security: Plaintext passcode is NEVER stored in client application code.
+  // Verified via Firebase Auth backend or salted one-way cryptographic SHA-256 digest.
+  const AUTH_SALT = "GWICS_SALT_2026_";
+  const EXPECTED_CREDENTIAL_DIGEST = "917f58c089fadb57c940a4ffd93b7f890bfc409483aa458592b1cc16744c205f";
 
   let loadedPack = null;
   let currentRoundNum = 1;
   let currentQIdx = 0;
   let targetAdjustTeamId = null;
+  let initialized = false;
+
+  async function verifyOrganizerPasscode(pin) {
+    if (!pin) return false;
+
+    // 1. Firebase backend verification when configured
+    if (window.firebase && firebase.auth && window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.apiKey) {
+      try {
+        await firebase.auth().signInWithEmailAndPassword("organizer@gwics.org", pin);
+        return true;
+      } catch (fbErr) {
+        console.warn("Firebase Auth attempt failed:", fbErr.message);
+      }
+    }
+
+    // 2. Cryptographic salted one-way hash verification (zero plaintext in client code)
+    try {
+      if (window.crypto && crypto.subtle) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(AUTH_SALT + pin);
+        const hashBuf = await crypto.subtle.digest("SHA-256", data);
+        const hashArray = Array.from(new Uint8Array(hashBuf));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+        return hashHex === EXPECTED_CREDENTIAL_DIGEST;
+      }
+    } catch (cryptoErr) {
+      console.error("Web Crypto verification error:", cryptoErr);
+    }
+
+    return false;
+  }
 
   function init() {
+    if (initialized) return;
+    initialized = true;
+
     setupAuth();
     setupPresentButton();
+    setupSignOut();
     setupRoundTabs();
     setupActionButtons();
     setupScoreModal();
@@ -30,7 +68,20 @@
     if (!btn) return;
     btn.onclick = () => {
       const room = (document.getElementById("hostRoomInput")?.value || Engine.roomCode || "BOTORNOT").trim().toUpperCase();
-      window.open(`projector.html?room=${encodeURIComponent(room)}`, "_blank");
+      window.open(`?mode=presentation&room=${encodeURIComponent(room)}`, "_blank");
+    };
+  }
+
+  function setupSignOut() {
+    const btn = document.getElementById("btnHostSignOut");
+    if (!btn) return;
+    btn.onclick = () => {
+      if (confirm("Sign out of Organizer Mission Control?")) {
+        sessionStorage.removeItem("gwics_host_authenticated");
+        sessionStorage.removeItem("gwics_cached_pack");
+        sessionStorage.removeItem("gwics_host_room");
+        window.location.href = "?mode=player";
+      }
     };
   }
 
@@ -41,6 +92,8 @@
     const form = document.getElementById("hostAuthForm");
     const gate = document.getElementById("viewHostGate");
     const dash = document.getElementById("viewHostDashboard");
+
+    if (!form || !gate || !dash) return;
 
     // Auto-resume if session is active
     const savedAuth = sessionStorage.getItem("gwics_host_authenticated");
@@ -60,15 +113,16 @@
       }
     }
 
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const pin = document.getElementById("hostPinInput").value.trim();
       const room = document.getElementById("hostRoomInput").value.trim().toUpperCase() || "BOTORNOT";
       const fileInput = document.getElementById("packFileInput");
 
-      // Authentic Passcode Verification
-      if (pin !== ORGANIZER_PASSCODE) {
-        alert("Access Denied: Invalid Organizer Passcode. Please check your credentials.");
+      // Authentic Credential Verification via backend / cryptographic hash
+      const isValid = await verifyOrganizerPasscode(pin);
+      if (!isValid) {
+        alert("Access Denied: Invalid Organizer Credential. Please check your credentials.");
         return;
       }
 
@@ -674,5 +728,21 @@
       .replace(/'/g, "&#039;");
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  window.GWICS_Host = {
+    init: init,
+    verifyOrganizerPasscode: verifyOrganizerPasscode
+  };
+
+  // If running standalone or document is already ready and app router hasn't initialized
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (window.GWICS_App && window.GWICS_App.getMode() === "organizer") {
+      init();
+    }
+  } else {
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.GWICS_App && window.GWICS_App.getMode() === "organizer") {
+        init();
+      }
+    });
+  }
 })();
