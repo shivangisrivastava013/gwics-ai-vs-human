@@ -98,7 +98,11 @@
     const sub = state.submittedCount || 0;
     const pct = total > 0 ? Math.round((sub / total) * 100) : 0;
     if (fill) fill.style.width = `${pct}%`;
-    if (countText) countText.textContent = `${sub} / ${total} Teams`;
+    if (countText) countText.textContent = `${sub} / ${total} Players`;
+
+    if (["LOBBY", "RESULTS", "VOIDED", "REVEALED"].includes(state.status)) {
+      document.getElementById("stageAudioPlayer").pause();
+    }
 
     // 1. Lobby View
     if (state.status === "LOBBY") {
@@ -107,7 +111,7 @@
       revealOverlay.style.display = "none";
       voidOverlay.style.display = "none";
       leaderboardView.style.display = "none";
-      document.getElementById("stageTeamsCount").textContent = `${total} Teams Ready at Tables`;
+      document.getElementById("stageTeamsCount").textContent = `${total} Players Ready`;
       document.getElementById("stageRoomCode").textContent = `ROOM: ${state.roomCode || 'BOTORNOT'}`;
       if (roundLabel) roundLabel.textContent = "Pre-Game Lobby";
       return;
@@ -139,6 +143,20 @@
 
     document.getElementById("stageQTitle").textContent = q.title;
     document.getElementById("stageQPrompt").textContent = q.prompt;
+
+    const audioPlayer = document.getElementById("stageAudioPlayer");
+    if (q.type !== "audio" || audioPlayer.dataset.question !== q.id) {
+      audioPlayer.pause();
+      audioPlayer.removeAttribute("src");
+      audioPlayer.load();
+      audioPlayer.dataset.question = q.id;
+      document.getElementById("stageAudioError").textContent = "";
+      if (q.type === "audio" && q.audioUrl) {
+        audioPlayer.src = q.audioUrl;
+        audioPlayer.load();
+        audioPlayer.onerror = () => { document.getElementById("stageAudioError").textContent = "Audio could not load. Host: check the recording URL."; };
+      }
+    }
 
     // Media Switch
     const imgContainer = document.getElementById("stageImgContainer");
