@@ -12,79 +12,95 @@
 
   <link rel="stylesheet" href="css/game.css">
   <style>
-    /* Dedicated 16:9 High-Contrast Projector Styling */
+    /* ==========================================================================
+       GWiCS Projector Stage - Viewport-Height-Constrained Grid Layout
+       Designed for 1920×1080, 1366×768, and 1024×768 in Fullscreen & Browser Mode
+       ========================================================================== */
+
     html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
+      height: 100dvh;
+      max-height: 100vh;
+      max-height: 100dvh;
       overflow: hidden;
       background: #07090D;
       color: #F8FAFC;
+      box-sizing: border-box;
     }
 
+    /* Viewport-Height-Constrained Grid */
     .projector-stage {
       width: 100vw;
       height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 3.2vw 4.5vw;
+      height: 100dvh;
+      max-height: 100vh;
+      max-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      padding: clamp(10px, 2vh, 24px) clamp(16px, 3.5vw, 48px);
       box-sizing: border-box;
+      overflow: hidden;
       position: relative;
     }
 
+    /* 1. Header Row (Auto) */
     .stage-header {
+      min-height: 0;
+      min-width: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 2px solid var(--charcoal-700);
-      padding-bottom: 1.2vw;
+      padding-bottom: clamp(6px, 1.2vh, 14px);
+      flex-shrink: 0;
     }
 
     .stage-brand {
       font-family: var(--font-display);
-      font-size: 2.2vw;
+      font-size: clamp(18px, min(2vw, 3.5vh), 32px);
       font-weight: 900;
       letter-spacing: -0.01em;
+      line-height: 1.1;
+      display: flex;
+      align-items: baseline;
     }
 
     .stage-brand .gold { color: var(--gold-500); }
     .stage-brand .cyan { color: var(--cyan-500); }
 
-    .stage-timer-box {
+    .stage-brand-sub {
       font-family: var(--font-mono);
-      font-size: 2.2vw;
-      font-weight: 800;
-      background: var(--charcoal-850);
-      border: 2px solid var(--charcoal-700);
-      padding: 0.3vw 1.5vw;
-      border-radius: var(--radius-pill);
-      color: var(--gold-400);
-      display: flex;
-      align-items: center;
-      gap: 0.8vw;
+      font-size: clamp(10px, min(1vw, 1.6vh), 14px);
+      color: var(--text-dim);
+      margin-left: clamp(8px, 1vw, 16px);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .stage-timer-box.urgent {
-      color: var(--color-danger);
-      border-color: var(--color-danger);
-      animation: pulse-border 1s infinite;
+    .stage-header-right {
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1.2vw, 16px);
     }
 
     /* Connection status badge */
     .stage-conn-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.5vw;
+      gap: 6px;
       font-family: var(--font-mono);
-      font-size: 1vw;
-      padding: 0.3vw 0.8vw;
+      font-size: clamp(10px, min(0.9vw, 1.5vh), 13px);
+      padding: clamp(3px, 0.5vh, 6px) clamp(8px, 1vw, 14px);
       border-radius: var(--radius-pill);
       background: var(--charcoal-850);
       border: 1px solid var(--charcoal-700);
       color: var(--text-muted);
+      white-space: nowrap;
     }
+
     .stage-conn-badge.connected {
       color: var(--color-success);
       border-color: rgba(34, 197, 94, 0.4);
@@ -98,188 +114,68 @@
       border-color: rgba(239, 68, 68, 0.4);
     }
 
-    /* Stage Canvas */
-    .stage-canvas {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      margin: 1.5vw 0;
-      position: relative;
-    }
-
-    /* Lobby View */
-    .projector-lobby {
-      text-align: center;
-      max-width: 72vw;
-    }
-
-    .lobby-big-title {
-      font-family: var(--font-display);
-      font-size: 5vw;
-      font-weight: 900;
-      line-height: 1.05;
-      margin-bottom: 2vw;
-    }
-
-    .lobby-join-instructions {
-      background: var(--charcoal-850);
-      border: 2px solid var(--gold-border);
-      border-radius: var(--radius-lg);
-      padding: 2vw 3vw;
-      display: inline-flex;
-      flex-direction: column;
-      gap: 0.8vw;
-      box-shadow: 0 0 40px var(--gold-subtle);
-    }
-
-    .lobby-room-code-tag {
+    /* Countdown Timer Box */
+    .stage-timer-box {
       font-family: var(--font-mono);
-      font-size: 2.8vw;
-      font-weight: 900;
-      color: var(--gold-400);
-      letter-spacing: 0.1em;
-    }
-
-    .lobby-teams-counter {
-      font-family: var(--font-mono);
-      font-size: 1.4vw;
-      color: var(--text-muted);
-      margin-top: 1.5vw;
-    }
-
-    /* Active Question Stage View */
-    .projector-question-layout {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .projector-q-head {
-      font-family: var(--font-display);
-      font-size: 2.6vw;
+      font-size: clamp(16px, min(1.8vw, 3.2vh), 28px);
       font-weight: 800;
-      margin-bottom: 0.4vw;
-      line-height: 1.2;
-    }
-
-    .projector-q-prompt {
-      font-size: 1.5vw;
-      color: var(--text-muted);
-      margin-bottom: 1.2vw;
-    }
-
-    /* Media Area */
-    .projector-media-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      border-radius: var(--radius-md);
-      background: var(--charcoal-900);
-      border: 1px solid var(--charcoal-700);
-      position: relative;
-    }
-
-    .projector-media-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    /* Literature Dual Cards */
-    .projector-text-duo {
-      width: 100%;
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2vw;
-    }
-
-    .projector-poem-card {
       background: var(--charcoal-850);
       border: 2px solid var(--charcoal-700);
-      border-radius: var(--radius-md);
-      padding: 2vw;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      font-family: var(--font-serif);
-      font-size: 1.7vw;
-      line-height: 1.6;
-      white-space: pre-line;
-      color: #FFFFFF;
-    }
-
-    .projector-poem-tag {
-      font-family: var(--font-mono);
-      font-size: 1.2vw;
-      font-weight: 800;
+      padding: clamp(3px, 0.6vh, 8px) clamp(12px, 1.5vw, 24px);
+      border-radius: var(--radius-pill);
       color: var(--gold-400);
-      margin-bottom: 0.8vw;
-      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 0.8vw, 12px);
+      white-space: nowrap;
     }
 
-    /* Audio View */
-    .projector-audio-view {
+    .stage-timer-box.urgent {
+      color: var(--color-danger);
+      border-color: var(--color-danger);
+      animation: pulse-border 1s infinite;
+    }
+
+    /* 2. Content Row (minmax(0, 1fr)) */
+    .stage-canvas {
+      min-height: 0;
+      min-width: 0;
+      height: 100%;
+      width: 100%;
+      margin: clamp(6px, 1.2vh, 16px) 0;
+      position: relative;
       display: flex;
       flex-direction: column;
-      align-items: center;
       justify-content: center;
-      gap: 1.8vw;
-      text-align: center;
-      width: 100%;
-    }
-
-    .audio-big-orb {
-      width: 12vw;
-      height: 12vw;
-      border-radius: 50%;
-      background: var(--charcoal-850);
-      border: 4px solid var(--cyan-500);
-      display: grid;
-      place-items: center;
-      font-family: var(--font-display);
-      font-size: 1.8vw;
-      font-weight: 800;
-      box-shadow: 0 0 40px var(--cyan-glow);
-    }
-
-    /* Showdown Grid */
-    .projector-showdown-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1.5vw;
-      width: 100%;
-      flex: 1;
       align-items: center;
+      overflow: hidden;
     }
 
-    /* Submissions Progress Footer */
+    /* 3. Footer Row (Auto) */
     .stage-footer {
+      min-height: 0;
+      min-width: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-top: 2px solid var(--charcoal-700);
-      padding-top: 1.2vw;
+      padding-top: clamp(6px, 1.2vh, 14px);
       font-family: var(--font-mono);
-      font-size: 1.2vw;
+      font-size: clamp(11px, min(1vw, 1.6vh), 15px);
       color: var(--text-muted);
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .submissions-meter {
       display: flex;
       align-items: center;
-      gap: 1vw;
+      gap: clamp(6px, 0.8vw, 12px);
     }
 
     .submissions-bar {
-      width: 18vw;
-      height: 1vw;
+      width: clamp(120px, 16vw, 240px);
+      height: clamp(8px, 1.2vh, 14px);
       background: var(--charcoal-800);
       border-radius: var(--radius-pill);
       overflow: hidden;
@@ -292,34 +188,285 @@
       transition: width 0.3s ease;
     }
 
-    /* Grand Reveal Overlay Banner */
+    /* ====================================================================
+       STAGE VIEWS
+       ==================================================================== */
+
+    /* A. Lobby View */
+    .projector-lobby {
+      text-align: center;
+      max-width: min(950px, 85vw);
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+    }
+
+    .lobby-big-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, min(4.5vw, 6.5vh), 64px);
+      font-weight: 900;
+      line-height: 1.05;
+      margin-bottom: clamp(10px, 2vh, 24px);
+    }
+
+    .lobby-join-instructions {
+      background: var(--charcoal-850);
+      border: 2px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      padding: clamp(12px, 2vh, 28px) clamp(20px, 3vw, 40px);
+      display: inline-flex;
+      flex-direction: column;
+      gap: clamp(6px, 1vh, 12px);
+      box-shadow: 0 0 40px var(--gold-subtle);
+      max-width: 100%;
+    }
+
+    .lobby-instructions-tag {
+      font-family: var(--font-mono);
+      font-size: clamp(12px, min(1.2vw, 2vh), 18px);
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .lobby-url-text {
+      font-family: var(--font-display);
+      font-size: clamp(16px, min(1.8vw, 3vh), 28px);
+      font-weight: 800;
+      color: #FFFFFF;
+      word-break: break-all;
+    }
+
+    .lobby-room-code-tag {
+      font-family: var(--font-mono);
+      font-size: clamp(22px, min(2.8vw, 4.5vh), 42px);
+      font-weight: 900;
+      color: var(--gold-400);
+      letter-spacing: 0.1em;
+    }
+
+    .lobby-teams-counter {
+      font-family: var(--font-mono);
+      font-size: clamp(12px, min(1.3vw, 2vh), 18px);
+      color: var(--text-muted);
+      margin-top: clamp(8px, 1.5vh, 20px);
+    }
+
+    /* B. Question Stage View (Grid Template Rows: auto minmax(0, 1fr)) */
+    .projector-question-layout {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: clamp(6px, 1.2vh, 16px);
+      overflow: hidden;
+    }
+
+    .projector-q-header {
+      min-height: 0;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+
+    .projector-q-head {
+      font-family: var(--font-display);
+      font-size: clamp(20px, min(2.2vw, 3.8vh), 38px);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: clamp(2px, 0.5vh, 6px);
+    }
+
+    .projector-q-prompt {
+      font-size: clamp(13px, min(1.3vw, 2.2vh), 20px);
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* Media 1: Images (Strictly Contained, Fully Visible) */
+    .projector-media-container {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: var(--radius-md);
+      background: var(--charcoal-900);
+      border: 1px solid var(--charcoal-700);
+      padding: clamp(4px, 0.8vh, 12px);
+      position: relative;
+    }
+
+    .projector-media-container img {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* Media 2: Literature Dual Cards */
+    .projector-text-duo {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(10px, 1.8vw, 24px);
+    }
+
+    .projector-poem-card {
+      background: var(--charcoal-850);
+      border: 2px solid var(--charcoal-700);
+      border-radius: var(--radius-md);
+      padding: clamp(12px, 2vh, 24px) clamp(14px, 2vw, 28px);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+
+    .projector-poem-tag {
+      font-family: var(--font-mono);
+      font-size: clamp(12px, min(1.2vw, 2vh), 18px);
+      font-weight: 800;
+      color: var(--gold-400);
+      margin-bottom: clamp(6px, 1vh, 14px);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .projector-passage-text {
+      font-family: var(--font-serif);
+      font-size: clamp(14px, min(1.35vw, 2.4vh), 22px);
+      line-height: 1.5;
+      white-space: pre-line;
+      color: #FFFFFF;
+      margin: auto 0;
+    }
+
+    /* Media 3: Audio Voice Check View */
+    .projector-audio-view {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(12px, 2.5vh, 28px);
+      text-align: center;
+    }
+
+    .audio-big-orb {
+      width: clamp(70px, min(12vw, 18vh), 140px);
+      height: clamp(70px, min(12vw, 18vh), 140px);
+      border-radius: 50%;
+      background: var(--charcoal-850);
+      border: 4px solid var(--cyan-500);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-display);
+      font-size: clamp(16px, min(1.8vw, 2.6vh), 26px);
+      font-weight: 800;
+      box-shadow: 0 0 35px var(--cyan-glow);
+      flex-shrink: 0;
+    }
+
+    .projector-audio-script {
+      font-family: var(--font-serif);
+      font-size: clamp(16px, min(1.8vw, 3vh), 28px);
+      max-width: min(850px, 75vw);
+      line-height: 1.45;
+      color: #FFFFFF;
+      max-height: 35vh;
+      overflow-y: auto;
+    }
+
+    /* Media 4: Round 4 Live Showdown Grid */
+    .projector-showdown-grid {
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(8px, 1.4vw, 20px);
+    }
+
+    .projector-showdown-card {
+      background: var(--charcoal-850);
+      border: 2px solid var(--charcoal-700);
+      border-radius: var(--radius-md);
+      padding: clamp(10px, 1.8vh, 20px) clamp(12px, 1.5vw, 22px);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      min-width: 0;
+      max-height: 100%;
+      overflow-y: auto;
+    }
+
+    .projector-showdown-text {
+      font-family: var(--font-body);
+      font-size: clamp(13px, min(1.2vw, 2vh), 18px);
+      line-height: 1.45;
+      color: #FFFFFF;
+      white-space: pre-line;
+      margin: auto 0;
+    }
+
+    /* C. Overlays (Grand Reveal & Voided) */
     .stage-reveal-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(7, 9, 13, 0.96);
+      background: rgba(7, 9, 13, 0.97);
       border: 3px solid var(--gold-500);
       border-radius: var(--radius-lg);
-      padding: 3vw;
+      padding: clamp(14px, 3vh, 36px) clamp(16px, 3vw, 48px);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      animation: fadeIn 0.4s ease;
+      animation: fadeIn 0.35s ease;
       z-index: 50;
       box-shadow: 0 0 60px var(--gold-glow);
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
+      overflow-y: auto;
     }
 
     .reveal-badge-giant {
       font-family: var(--font-display);
-      font-size: 3.8vw;
+      font-size: clamp(20px, min(3.2vw, 5vh), 44px);
       font-weight: 900;
       color: #000;
       background: var(--gold-500);
-      padding: 0.5vw 2.5vw;
+      padding: clamp(6px, 1vh, 12px) clamp(18px, 2.5vw, 36px);
       border-radius: var(--radius-pill);
-      margin-bottom: 1.8vw;
+      margin-bottom: clamp(10px, 2vh, 22px);
       box-shadow: 0 0 30px var(--gold-glow);
+      flex-shrink: 0;
     }
 
     .reveal-badge-giant.ai {
@@ -328,31 +475,60 @@
     }
 
     .reveal-tell-giant {
-      font-size: 1.9vw;
+      font-size: clamp(15px, min(1.6vw, 2.6vh), 24px);
       color: #FFFFFF;
-      max-width: 65vw;
+      max-width: min(900px, 78vw);
+      max-height: 50vh;
+      overflow-y: auto;
       line-height: 1.5;
     }
 
-    /* Leaderboard Podium Stage */
-    .stage-leaderboard-grid {
+    /* D. Leaderboard View */
+    #stageLeaderboardView {
       width: 100%;
-      max-width: 70vw;
+      max-height: 100%;
+      min-height: 0;
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.8vw;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+      margin: auto 0;
+    }
+
+    .leaderboard-title {
+      font-family: var(--font-display);
+      font-size: clamp(22px, min(3vw, 4.5vh), 42px);
+      font-weight: 900;
+      margin-bottom: clamp(8px, 1.5vh, 18px);
+      color: var(--gold-400);
+      flex-shrink: 0;
+    }
+
+    .stage-leaderboard-grid {
+      width: 100%;
+      max-width: min(850px, 80vw);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(4px, 0.8vh, 10px);
+      min-height: 0;
+      min-width: 0;
+      overflow-y: auto;
+      padding-right: 4px;
     }
 
     .stage-board-card {
       display: grid;
-      grid-template-columns: 4vw 1fr 14vw;
+      grid-template-columns: clamp(32px, 4vw, 55px) minmax(0, 1fr) clamp(80px, 12vw, 150px);
       align-items: center;
       background: var(--charcoal-850);
       border: 1px solid var(--charcoal-700);
       border-radius: var(--radius-md);
-      padding: 0.8vw 1.8vw;
-      font-size: 1.6vw;
+      padding: clamp(6px, 1vh, 12px) clamp(12px, 1.5vw, 24px);
+      font-size: clamp(13px, min(1.4vw, 2.2vh), 20px);
       font-weight: 700;
+      flex-shrink: 0;
     }
 
     .stage-board-card:nth-child(1) {
@@ -360,11 +536,51 @@
       background: rgba(229, 184, 66, 0.12);
     }
 
+    /* Subtle custom scrollbars for cards/overlays */
+    .projector-poem-card::-webkit-scrollbar,
+    .projector-showdown-card::-webkit-scrollbar,
+    .stage-reveal-overlay::-webkit-scrollbar,
+    .stage-leaderboard-grid::-webkit-scrollbar,
+    .reveal-tell-giant::-webkit-scrollbar,
+    .projector-audio-script::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .projector-poem-card::-webkit-scrollbar-track,
+    .projector-showdown-card::-webkit-scrollbar-track,
+    .stage-reveal-overlay::-webkit-scrollbar-track,
+    .stage-leaderboard-grid::-webkit-scrollbar-track,
+    .reveal-tell-giant::-webkit-scrollbar-track,
+    .projector-audio-script::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-pill);
+    }
+
+    .projector-poem-card::-webkit-scrollbar-thumb,
+    .projector-showdown-card::-webkit-scrollbar-thumb,
+    .stage-reveal-overlay::-webkit-scrollbar-thumb,
+    .stage-leaderboard-grid::-webkit-scrollbar-thumb,
+    .reveal-tell-giant::-webkit-scrollbar-thumb,
+    .projector-audio-script::-webkit-scrollbar-thumb {
+      background: var(--charcoal-600);
+      border-radius: var(--radius-pill);
+    }
+
+    .projector-poem-card::-webkit-scrollbar-thumb:hover,
+    .projector-showdown-card::-webkit-scrollbar-thumb:hover,
+    .stage-reveal-overlay::-webkit-scrollbar-thumb:hover,
+    .stage-leaderboard-grid::-webkit-scrollbar-thumb:hover,
+    .reveal-tell-giant::-webkit-scrollbar-thumb:hover,
+    .projector-audio-script::-webkit-scrollbar-thumb:hover {
+      background: var(--gold-500);
+    }
+
+    /* Fullscreen Toggle Button */
     .fs-toggle-btn {
       position: fixed;
-      top: 1vw;
-      right: 1vw;
-      opacity: 0.3;
+      top: 10px;
+      right: 12px;
+      opacity: 0.35;
       transition: opacity 0.2s;
       z-index: 1000;
     }
@@ -380,14 +596,14 @@
 
   <div class="projector-stage">
     
-    <!-- Top Stage Header -->
+    <!-- Row 1: Top Stage Header (auto) -->
     <header class="stage-header">
       <div class="stage-brand">
-        <span class="gold">BOT</span> OR <span class="cyan">NOT?</span>
-        <span style="font-family:var(--font-mono); font-size:1.1vw; color:var(--text-dim); margin-left:1vw; text-transform:uppercase;">GWiCS Showdown</span>
+        <span class="gold">BOT</span>&nbsp;OR&nbsp;<span class="cyan">NOT?</span>
+        <span class="stage-brand-sub">GWiCS Showdown</span>
       </div>
 
-      <div style="display:flex; align-items:center; gap:1.2vw;">
+      <div class="stage-header-right">
         <div class="stage-conn-badge connecting" id="stageConnBadge">
           <span>●</span> <span id="stageConnText">Connecting...</span>
         </div>
@@ -398,7 +614,7 @@
       </div>
     </header>
 
-    <!-- Main Dynamic Stage Canvas -->
+    <!-- Row 2: Main Dynamic Stage Canvas (minmax(0, 1fr)) -->
     <main class="stage-canvas" id="stageCanvas">
       
       <!-- 1. LOBBY VIEW -->
@@ -408,10 +624,10 @@
         </h1>
 
         <div class="lobby-join-instructions">
-          <div style="font-family:var(--font-mono); font-size:1.3vw; color:var(--text-muted); text-transform:uppercase;">
+          <div class="lobby-instructions-tag">
             Join on your table captain's phone
           </div>
-          <div style="font-family:var(--font-display); font-size:1.8vw; font-weight:800; color:#FFFFFF;">
+          <div class="lobby-url-text">
             shivangisrivastava013.github.io/gwics-ai-vs-human
           </div>
           <div class="lobby-room-code-tag" id="stageRoomCode">
@@ -426,51 +642,51 @@
 
       <!-- 2. QUESTION VIEW (Synchronized with Host) -->
       <div class="projector-question-layout" id="stageQuestionView" style="display:none;">
-        <div>
+        <div class="projector-q-header">
           <h2 class="projector-q-head" id="stageQTitle">Question Title</h2>
           <div class="projector-q-prompt" id="stageQPrompt">Prompt description</div>
         </div>
 
-        <!-- Media Stage: Image -->
+        <!-- Media Stage 1: Image (Contained & Centered) -->
         <div class="projector-media-container" id="stageImgContainer" style="display:none;">
           <img id="stageImgEl" src="" alt="Projector visual">
         </div>
 
-        <!-- Media Stage: Literature Duo -->
+        <!-- Media Stage 2: Literature Duo (Side-by-side with bounded text) -->
         <div class="projector-text-duo" id="stageTextContainer" style="display:none;">
           <div class="projector-poem-card">
             <span class="projector-poem-tag">Passage A</span>
-            <div id="stagePassageA">Passage A</div>
+            <div class="projector-passage-text" id="stagePassageA">Passage A</div>
           </div>
           <div class="projector-poem-card">
             <span class="projector-poem-tag">Passage B</span>
-            <div id="stagePassageB">Passage B</div>
+            <div class="projector-passage-text" id="stagePassageB">Passage B</div>
           </div>
         </div>
 
-        <!-- Media Stage: Audio Voice Check -->
+        <!-- Media Stage 3: Audio Voice Check -->
         <div class="projector-audio-view" id="stageAudioContainer" style="display:none;">
           <div class="audio-big-orb" id="stageAudioOrb">
             <span>Clip</span>
           </div>
-          <div style="font-family:var(--font-serif); font-size:2vw; max-width:60vw; color:#FFFFFF;" id="stageAudioScript">
+          <div class="projector-audio-script" id="stageAudioScript">
             “Audio transcript”
           </div>
         </div>
 
-        <!-- Media Stage: Round 4 Live Showdown -->
+        <!-- Media Stage 4: Round 4 Live Showdown (3 Neutral Cards) -->
         <div class="projector-showdown-grid" id="stageShowdownContainer" style="display:none;">
-          <div class="projector-poem-card" style="text-align:left; padding:2vw;">
-            <div class="projector-poem-tag" style="font-size:1.6vw; color:var(--gold-400);">Contender A</div>
-            <div id="stageContenderA" style="font-size:1.35vw; line-height:1.5; color:#FFFFFF; white-space:pre-line;">Waiting for response...</div>
+          <div class="projector-showdown-card">
+            <div class="projector-poem-tag">Contender A</div>
+            <div class="projector-showdown-text" id="stageContenderA">Waiting for response...</div>
           </div>
-          <div class="projector-poem-card" style="text-align:left; padding:2vw;">
-            <div class="projector-poem-tag" style="font-size:1.6vw; color:var(--gold-400);">Contender B</div>
-            <div id="stageContenderB" style="font-size:1.35vw; line-height:1.5; color:#FFFFFF; white-space:pre-line;">Waiting for response...</div>
+          <div class="projector-showdown-card">
+            <div class="projector-poem-tag">Contender B</div>
+            <div class="projector-showdown-text" id="stageContenderB">Waiting for response...</div>
           </div>
-          <div class="projector-poem-card" style="text-align:left; padding:2vw;">
-            <div class="projector-poem-tag" style="font-size:1.6vw; color:var(--gold-400);">Contender C</div>
-            <div id="stageContenderC" style="font-size:1.35vw; line-height:1.5; color:#FFFFFF; white-space:pre-line;">Waiting for response...</div>
+          <div class="projector-showdown-card">
+            <div class="projector-poem-tag">Contender C</div>
+            <div class="projector-showdown-text" id="stageContenderC">Waiting for response...</div>
           </div>
         </div>
       </div>
@@ -493,7 +709,7 @@
 
       <!-- 5. LEADERBOARD VIEW -->
       <div class="projector-lobby" id="stageLeaderboardView" style="display:none;">
-        <h2 style="font-family:var(--font-display); font-size:3.2vw; font-weight:900; margin-bottom:1.5vw; color:var(--gold-400);">
+        <h2 class="leaderboard-title">
           🏆 Official Standings
         </h2>
         <div class="stage-leaderboard-grid" id="stageLeaderboardList">
@@ -503,7 +719,7 @@
 
     </main>
 
-    <!-- Bottom Stage Footer -->
+    <!-- Row 3: Bottom Stage Footer (auto) -->
     <footer class="stage-footer">
       <div id="stageRoundLabel">Round 1: Real or AI?</div>
 

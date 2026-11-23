@@ -102,7 +102,7 @@
 
     // 1. Lobby View
     if (state.status === "LOBBY") {
-      lobbyView.style.display = "block";
+      lobbyView.style.display = "flex";
       questionView.style.display = "none";
       revealOverlay.style.display = "none";
       voidOverlay.style.display = "none";
@@ -119,7 +119,7 @@
       questionView.style.display = "none";
       revealOverlay.style.display = "none";
       voidOverlay.style.display = "none";
-      leaderboardView.style.display = "block";
+      leaderboardView.style.display = "flex";
       if (roundLabel) roundLabel.textContent = "Leaderboard Standings";
       renderLeaderboard(state.leaderboard || []);
       return;
@@ -127,7 +127,7 @@
 
     // 3. Question View (Active or Locked or Revealed or Voided)
     lobbyView.style.display = "none";
-    questionView.style.display = "flex";
+    questionView.style.display = "grid";
     leaderboardView.style.display = "none";
 
     const q = state.currentQuestion;
