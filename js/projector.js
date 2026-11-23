@@ -163,6 +163,10 @@
       document.getElementById("stageAudioScript").textContent = q.transcript || "";
     } else if (q.type === "showdown") {
       showdownContainer.style.display = "grid";
+      const cont = q.contenders || {};
+      document.getElementById("stageContenderA").textContent = cont.A || "Waiting for live response...";
+      document.getElementById("stageContenderB").textContent = cont.B || "Waiting for live response...";
+      document.getElementById("stageContenderC").textContent = cont.C || "Waiting for live response...";
     }
 
     // Voided Overlay
@@ -177,10 +181,12 @@
     // Reveal Overlay (When Host reveals answer)
     if (state.status === "REVEALED") {
       revealOverlay.style.display = "flex";
-      const isAI = state.releasedAnswer === "AI" || state.releasedAnswer === "B" || state.releasedAnswer === "C";
+      const isShowdown = q.type === "showdown";
       const badge = document.getElementById("stageRevealBadge");
-      badge.textContent = `OFFICIAL VERDICT: ${state.releasedAnswer}`;
-      badge.className = `reveal-badge-giant ${isAI ? 'ai' : ''}`;
+      badge.textContent = isShowdown
+        ? `OFFICIAL VERDICT: CONTENDER ${state.releasedAnswer} WAS AI`
+        : `OFFICIAL VERDICT: ${state.releasedAnswer}`;
+      badge.className = "reveal-badge-giant ai";
       document.getElementById("stageRevealTell").innerHTML = `
         <strong>The Tell:</strong> ${escapeHtml(state.releasedTell || "Verified by host.")}
       `;

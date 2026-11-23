@@ -243,10 +243,12 @@
     const imgFrame = document.getElementById("qImageFrame");
     const textFrame = document.getElementById("qTextFrame");
     const audioFrame = document.getElementById("qAudioFrame");
+    const showdownFrame = document.getElementById("qShowdownFrame");
 
     imgFrame.style.display = "none";
     textFrame.style.display = "none";
     audioFrame.style.display = "none";
+    if (showdownFrame) showdownFrame.style.display = "none";
 
     if (q.type === "image" && q.media) {
       imgFrame.style.display = "block";
@@ -271,6 +273,14 @@
         currentAudio.onerror = () => { btnPlay.textContent = "⚠️ Audio unavailable (see cues below)"; };
         currentAudio.play().catch(() => { btnPlay.textContent = "▶ Tap again to play"; });
       };
+    } else if (q.type === "showdown") {
+      if (showdownFrame) {
+        showdownFrame.style.display = "flex";
+        const cont = q.contenders || {};
+        document.getElementById("txtContenderA").textContent = cont.A || "Waiting for live response...";
+        document.getElementById("txtContenderB").textContent = cont.B || "Waiting for live response...";
+        document.getElementById("txtContenderC").textContent = cont.C || "Waiting for live response...";
+      }
     }
 
     // 2. Options Grid & Submission Status
@@ -366,8 +376,10 @@
       const isCorrect = teamSub && teamSub.choice === state.releasedAnswer;
       resultBox.className = `released-result-box ${isCorrect ? 'correct' : 'incorrect'}`;
 
-      document.getElementById("releasedVerdictBadge").textContent = 
-        `Official Answer: ${state.releasedAnswer}`;
+      const isShowdown = q.type === "showdown";
+      document.getElementById("releasedVerdictBadge").textContent = isShowdown
+        ? `Official Answer: Contender ${state.releasedAnswer} was AI`
+        : `Official Answer: ${state.releasedAnswer}`;
       document.getElementById("releasedPointsDelta").textContent = 
         teamSub ? (isCorrect ? "+100 XP (Correct!)" : "0 XP (Incorrect)") : "No Answer Submitted";
       document.getElementById("releasedPointsDelta").style.color = isCorrect ? "var(--color-success)" : "var(--color-danger)";

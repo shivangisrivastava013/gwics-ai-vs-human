@@ -16,16 +16,19 @@ Official live multi-device competition platform for **BOT OR NOT? The Ultimate S
 
 ## 🔒 Zero-Leak Security & Organizer Vault
 
+* **Organizer Authentication:** Host dashboard is protected by the organizer passcode (`GWICS2026!`).
 * **Public GitHub Pages Static Safety:** GitHub Pages hosts only public static assets. **No confidential answer keys, tells, or organizer download packs are committed to the public GitHub repository.**
 * **Local Pack Loader:** The organizer keeps `local_organizer_vault/competition_pack.json` locally on their laptop. Upon logging into `host.html`, the organizer selects this file via the secure file picker. The competition pack is parsed locally in browser memory (`FileReader`) and never transmitted across the public internet.
 * **Payload Sanitation:** The host engine strips answers (`ans`) and explanations (`tell`) before broadcasting any active question to participants or projector.
+* **Round 4 Live Showdown Privacy:** Contender options are strictly neutral (`Contender A`, `Contender B`, `Contender C` with no labels or color hints). The host dashboard features an automatic randomizer (`🎲 Randomize AI Slot`) that rotates which letter represents the AI model for each duel, keeping both the emcee and audience unbiased.
 
 ---
 
 ## 🌐 Real-time Multi-Device Sync
 
-* **WebRTC Cloud Relay (Zero Configuration):** Uses built-in peer-to-peer WebRTC DataChannels (via PeerJS). Attendees on mobile phones (campus Wi-Fi or cellular) connect directly to the host laptop room (`BOTORNOT`).
-* **Absolute Timestamp Deadlines:** Timers synchronize via absolute epoch deadlines (`deadline = Date.now() + duration * 1000`). If a participant backgrounds their browser tab or phone sleeps, the timer remains strictly accurate upon wake-up.
+* **WebRTC Cloud Relay (Zero Configuration):** Uses built-in peer-to-peer WebRTC DataChannels (via PeerJS) with multi-STUN resilience and automatic heartbeat keep-alive pings to prevent cellular or NAT timeouts. Attendees on mobile phones (campus Wi-Fi or cellular) connect directly to the host laptop room (`BOTORNOT`).
+* **Live Connection Accuracy:** The host dashboard displays the exact number of active phones connected (`Cloud Sync Active (X phones joined)`), distinguishing true cloud sync from local tab fallbacks.
+* **Question-Level Timing:** Each item uses its exact designated duration (120s for Round 4 duels, 60s for tie-breakers, 45s for standard rounds). Timers synchronize via absolute epoch deadlines (`deadline = Date.now() + duration * 1000`). If a participant backgrounds their browser tab or phone sleeps, the timer remains strictly accurate upon wake-up.
 * **Private Team Messaging:** When the host scores answers or reveals hints, each team receives only their own private record. Other teams cannot inspect their competitors' choices over the network.
 * **Offline / Multi-tab Rehearsal Fallback:** BroadcastChannel & storage events are supported automatically for single-laptop rehearsal.
 

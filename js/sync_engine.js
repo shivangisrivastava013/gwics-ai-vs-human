@@ -59,6 +59,7 @@
         stateChange: [],
         teamUpdate: [],
         connectionChange: [],
+        peersChange: [],
         eventMessage: []
       };
 
@@ -78,6 +79,7 @@
     onStateChange(cb) { this.listeners.stateChange.push(cb); }
     onTeamUpdate(cb) { this.listeners.teamUpdate.push(cb); }
     onConnectionChange(cb) { this.listeners.connectionChange.push(cb); }
+    onPeersChange(cb) { this.listeners.peersChange.push(cb); }
     onEvent(cb) { this.listeners.eventMessage.push(cb); }
 
     emit(event, data) {
@@ -137,13 +139,17 @@
       this.setConnectionStatus("CONNECTING");
 
       try {
-        // Connect to public PeerJS cloud signaling
+        // Connect to public PeerJS cloud signaling with multi-STUN resilience
         this.peer = new Peer(hostId, {
           debug: 1,
           config: {
             iceServers: [
               { urls: "stun:stun.l.google.com:19302" },
-              { urls: "stun:stun1.l.google.com:19302" }
+              { urls: "stun:stun1.l.google.com:19302" },
+              { urls: "stun:stun2.l.google.com:19302" },
+              { urls: "stun:stun3.l.google.com:19302" },
+              { urls: "stun:stun4.l.google.com:19302" },
+              { urls: "stun:global.stun.twilio.com:3478" }
             ]
           }
         });
@@ -151,6 +157,18 @@
         this.peer.on("open", (id) => {
           console.log("Host WebRTC Peer opened with ID:", id);
           this.setConnectionStatus("CONNECTED");
+          this.emit("peersChange", Object.keys(this.peerConnections).length);
+
+          // Heartbeat interval to prevent NAT / cellular disconnection
+          clearInterval(this._pingInterval);
+          this._pingInterval = setInterval(() => {
+            for (const p in this.peerConnections) {
+              const c = this.peerConnections[p];
+              if (c && c.open) {
+                try { c.send({ type: "GWICS_PING" }); } catch (e) {}
+              }
+            }
+          }, 8000);
         });
 
         this.peer.on("connection", (conn) => {
@@ -160,10 +178,10 @@
         this.peer.on("error", (err) => {
           console.warn("PeerJS Host Error:", err.type, err.message);
           if (err.type === "unavailable-id") {
-            // Host already open in another window or reloaded quickly
             console.warn("Host peer ID is busy. Using secondary peer session.");
           }
-          this.setConnectionStatus("CONNECTED"); // Local fallback works
+          // Do NOT mislead user with CONNECTED when cloud peer failed!
+          this.setConnectionStatus("LOCAL_ONLY");
         });
 
         this.peer.on("disconnected", () => {
@@ -175,13 +193,14 @@
 
       } catch (e) {
         console.error("PeerJS initialization failed:", e);
-        this.setConnectionStatus("CONNECTED");
+        this.setConnectionStatus("LOCAL_ONLY");
       }
     }
 
     setupHostPeerConnection(conn) {
       conn.on("open", () => {
         this.peerConnections[conn.peer] = conn;
+        this.emit("peersChange", Object.keys(this.peerConnections).length);
 
         // Immediately send current public state to newly connected client
         conn.send({
@@ -192,6 +211,12 @@
 
       conn.on("data", (data) => {
         if (!data) return;
+        if (data.type === "GWICS_PING") {
+          try { conn.send({ type: "GWICS_PONG" }); } catch (e) {}
+          return;
+        }
+        if (data.type === "GWICS_PONG") return;
+
         // Bind the connection to the message for targeted responses
         data._peerId = conn.peer;
         this.handleClientMessage(data);
@@ -199,10 +224,12 @@
 
       conn.on("close", () => {
         delete this.peerConnections[conn.peer];
+        this.emit("peersChange", Object.keys(this.peerConnections).length);
       });
 
       conn.on("error", () => {
         delete this.peerConnections[conn.peer];
+        this.emit("peersChange", Object.keys(this.peerConnections).length);
       });
     }
 
@@ -223,7 +250,11 @@
           config: {
             iceServers: [
               { urls: "stun:stun.l.google.com:19302" },
-              { urls: "stun:stun1.l.google.com:19302" }
+              { urls: "stun:stun1.l.google.com:19302" },
+              { urls: "stun:stun2.l.google.com:19302" },
+              { urls: "stun:stun3.l.google.com:19302" },
+              { urls: "stun:stun4.l.google.com:19302" },
+              { urls: "stun:global.stun.twilio.com:3478" }
             ]
           }
         });
@@ -291,6 +322,14 @@
 
     handleIncomingClientPayload(data) {
       if (!data) return;
+
+      if (data.type === "GWICS_PING") {
+        if (this.hostConnection && this.hostConnection.open) {
+          try { this.hostConnection.send({ type: "GWICS_PONG" }); } catch (e) {}
+        }
+        return;
+      }
+      if (data.type === "GWICS_PONG") return;
 
       if (data.type === "STATE_SYNC") {
         this.onRemoteStateUpdate(data.state);
@@ -379,7 +418,7 @@
       if (!round || !round.items || !round.items[questionIdx]) return;
 
       const fullItem = round.items[questionIdx];
-      const duration = round.timeLimit || 45;
+      const duration = fullItem.timeLimit || round.timeLimit || 45;
       const deadline = Date.now() + (duration * 1000);
 
       // PUBLIC PAYLOAD: Strictly NO ans and NO tell!
@@ -398,6 +437,7 @@
         audioUrl: fullItem.audioUrl || null,
         transcript: fullItem.transcript || null,
         audioAccessibilityNotes: fullItem.audioAccessibilityNotes || null,
+        contenders: fullItem.contenders || null,
         options: fullItem.options || [],
         hintAvailable: !!fullItem.hint,
         timeLimit: duration
