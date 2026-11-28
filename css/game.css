@@ -1600,3 +1600,90 @@ body.mode-presentation {
   vertical-align: middle;
 }
 
+/* Distribution Grid and Bars */
+.stage-distribution-grid {
+  width: 100%;
+  max-width: min(800px, 75vw);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.5vh, 18px);
+}
+
+.stage-dist-card {
+  background: var(--charcoal-850);
+  border: 1.5px solid var(--charcoal-700);
+  border-radius: var(--radius-md);
+  padding: clamp(8px, 1.4vh, 16px) clamp(14px, 2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stage-dist-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: clamp(14px, min(1.6vw, 2.4vh), 22px);
+  font-weight: 800;
+}
+
+.stage-dist-bar-track {
+  width: 100%;
+  height: clamp(14px, 2.2vh, 26px);
+  background: var(--charcoal-900);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border: 1px solid var(--charcoal-700);
+}
+
+.stage-dist-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-500) 0%, var(--gold-400) 100%);
+  border-radius: var(--radius-pill);
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-dist-bar-fill.ai-fill {
+  background: linear-gradient(90deg, var(--cyan-500) 0%, var(--cyan-400) 100%);
+}
+
+/* Final 3-tier podium grid */
+.stage-podium-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(10px, 2vw, 24px);
+  width: 100%;
+  max-width: min(900px, 85vw);
+  margin-bottom: 2vh;
+  align-items: flex-end;
+}
+
+.stage-podium-card {
+  background: var(--charcoal-850);
+  border: 2px solid var(--charcoal-700);
+  border-radius: var(--radius-lg);
+  padding: clamp(12px, 2vh, 24px) clamp(8px, 1.5vw, 18px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.stage-podium-card.rank-1 {
+  border-color: var(--gold-400);
+  box-shadow: 0 0 35px var(--gold-glow);
+  transform: translateY(-10px);
+  background: linear-gradient(180deg, rgba(229,184,66,0.18) 0%, rgba(18,22,30,0.95) 100%);
+}
+
+.stage-podium-card.rank-2 {
+  border-color: #C0C0C0;
+  box-shadow: 0 0 20px rgba(192,192,192,0.25);
+}
+
+.stage-podium-card.rank-3 {
+  border-color: #CD7F32;
+  box-shadow: 0 0 20px rgba(205,127,50,0.25);
+}
+

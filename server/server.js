@@ -81,6 +81,34 @@ function broadcast() {
   }
 }
 
+function calculateDistribution() {
+  const q = publicState.currentQuestion;
+  if (!q) return null;
+  const counts = {};
+  let totalVotes = 0;
+  (q.options || []).forEach(opt => { counts[opt.id] = 0; });
+
+  for (const p of Object.values(players)) {
+    const choice = p.answers?.[q.id];
+    if (choice) {
+      if (counts[choice] !== undefined) {
+        counts[choice]++;
+      } else {
+        counts[choice] = 1;
+      }
+      totalVotes++;
+    }
+  }
+
+  const dist = {};
+  for (const optId in counts) {
+    const cnt = counts[optId];
+    const pct = totalVotes > 0 ? Math.round((cnt / totalVotes) * 100) : 0;
+    dist[optId] = { count: cnt, percent: pct };
+  }
+  return { totalVotes, dist };
+}
+
 function calculateLeaderboard() {
   return Object.values(players)
     .map(p => ({
@@ -358,10 +386,9 @@ function handleApi(req, res) {
 
       const action = body.action;
 
-      if (action === "SET_QUESTION") {
+      if (action === "START_COUNTDOWN") {
         const roundNum = body.roundNum || publicState.roundNum;
         const qIdx = body.questionIndex !== undefined ? body.questionIndex : publicState.questionIndex;
-
         const round = (privatePack?.rounds || []).find(r => r.roundNum === roundNum);
         if (!round || !round.items || !round.items[qIdx]) {
           res.writeHead(400, { "Content-Type": "application/json" });
@@ -369,22 +396,58 @@ function handleApi(req, res) {
           return;
         }
 
+        if (timerInterval) clearInterval(timerInterval);
+        publicState.status = "COUNTDOWN";
+        publicState.roundNum = roundNum;
+        publicState.roundTitle = round.title || round.name || `Round ${roundNum}`;
+        publicState.questionIndex = qIdx;
+        publicState.countdown = 3;
+        broadcast();
+
+        let count = 3;
+        timerInterval = setInterval(() => {
+          count--;
+          publicState.countdown = count;
+          if (count <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            // Launch question automatically
+            launchQuestion(roundNum, qIdx);
+          } else {
+            broadcast();
+          }
+        }, 1000);
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, status: "COUNTDOWN" }));
+        return;
+      }
+
+      function launchQuestion(roundNum, qIdx) {
+        const round = (privatePack?.rounds || []).find(r => r.roundNum === roundNum);
+        if (!round || !round.items || !round.items[qIdx]) return;
         const fullItem = round.items[qIdx];
         const timeLimit = fullItem.timeLimit || round.timeLimit || 45;
+        const isAudio = fullItem.type === "audio";
+        const listenFirst = Boolean(fullItem.listenFirst || round.listenFirst);
 
-        // Strip answer and tell before broadcasting!
         publicState.status = "QUESTION";
         publicState.roundNum = roundNum;
+        publicState.roundTitle = round.title || round.name;
         publicState.questionIndex = qIdx;
         publicState.releasedAnswer = null;
         publicState.releasedTell = null;
         publicState.releasedSource = null;
         publicState.voidReason = null;
+        publicState.distribution = null;
+        publicState.audioPlaying = isAudio && listenFirst;
+        publicState.replaysLeft = isAudio ? 1 : 0;
         publicState.submittedCount = 0;
 
         publicState.currentQuestion = {
           id: fullItem.id,
           roundNum: roundNum,
+          roundName: round.title || round.name,
           title: fullItem.title,
           prompt: fullItem.prompt,
           type: fullItem.type,
@@ -396,6 +459,7 @@ function handleApi(req, res) {
           contenders: fullItem.contenders,
           options: fullItem.options,
           timeLimit: timeLimit,
+          listenFirst: listenFirst,
           hintAvailable: Boolean(fullItem.hint),
           hintCost: 25
         };
@@ -404,26 +468,86 @@ function handleApi(req, res) {
           total: timeLimit,
           deadline: Date.now() + timeLimit * 1000,
           remaining: timeLimit,
-          running: true
+          running: !(isAudio && listenFirst)
         };
 
         if (timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(() => {
-          if (!publicState.timer.running) return;
-          const left = Math.max(0, Math.round((publicState.timer.deadline - Date.now()) / 1000));
-          publicState.timer.remaining = left;
-          if (left <= 0) {
-            publicState.timer.running = false;
-            publicState.status = "LOCKED";
-            clearInterval(timerInterval);
-            timerInterval = null;
-          }
-          broadcast();
-        }, 1000);
+        if (publicState.timer.running) {
+          timerInterval = setInterval(() => {
+            if (!publicState.timer.running) return;
+            const left = Math.max(0, Math.round((publicState.timer.deadline - Date.now()) / 1000));
+            publicState.timer.remaining = left;
+            if (left <= 0) {
+              publicState.timer.running = false;
+              publicState.status = "LOCKED";
+              publicState.distribution = calculateDistribution();
+              clearInterval(timerInterval);
+              timerInterval = null;
+            }
+            broadcast();
+          }, 1000);
+        }
 
         broadcast();
+      }
+
+      if (action === "SET_QUESTION") {
+        const roundNum = body.roundNum || publicState.roundNum;
+        const qIdx = body.questionIndex !== undefined ? body.questionIndex : publicState.questionIndex;
+
+        const round = (privatePack?.rounds || []).find(r => r.roundNum === roundNum);
+        if (!round || !round.items || !round.items[qIdx]) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Question not found in pack" }));
+          return;
+        }
+
+        launchQuestion(roundNum, qIdx);
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: true, questionId: fullItem.id }));
+        res.end(JSON.stringify({ success: true, questionId: round.items[qIdx].id }));
+        return;
+      }
+
+      if (action === "AUDIO_FINISHED") {
+        if (publicState.audioPlaying) {
+          publicState.audioPlaying = false;
+          const timeLimit = publicState.timer.total || 20;
+          publicState.timer.remaining = timeLimit;
+          publicState.timer.deadline = Date.now() + timeLimit * 1000;
+          publicState.timer.running = true;
+
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            if (!publicState.timer.running) return;
+            const left = Math.max(0, Math.round((publicState.timer.deadline - Date.now()) / 1000));
+            publicState.timer.remaining = left;
+            if (left <= 0) {
+              publicState.timer.running = false;
+              publicState.status = "LOCKED";
+              publicState.distribution = calculateDistribution();
+              clearInterval(timerInterval);
+              timerInterval = null;
+            }
+            broadcast();
+          }, 1000);
+
+          broadcast();
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, audioPlaying: false }));
+        return;
+      }
+
+      if (action === "REPLAY_AUDIO") {
+        if (publicState.replaysLeft > 0) {
+          publicState.replaysLeft--;
+          publicState.audioPlaying = true;
+          publicState.timer.running = false;
+          if (timerInterval) clearInterval(timerInterval);
+          broadcast();
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, replaysLeft: publicState.replaysLeft }));
         return;
       }
 
@@ -441,10 +565,11 @@ function handleApi(req, res) {
       if (action === "LOCK_SUBMISSIONS") {
         publicState.status = "LOCKED";
         publicState.timer.running = false;
+        publicState.distribution = calculateDistribution();
         if (timerInterval) clearInterval(timerInterval);
         broadcast();
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ success: true }));
+        res.end(JSON.stringify({ success: true, distribution: publicState.distribution }));
         return;
       }
 

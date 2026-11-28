@@ -350,27 +350,80 @@
       document.getElementById("viewInGame").style.display = "flex";
     }
 
-    if (state.status === "RESULTS") {
+    // 1. Countdown "Get Ready" State
+    if (state.status === "COUNTDOWN") {
       cardLobby.style.display = "block";
       cardActive.style.display = "none";
-      if (roundTag) roundTag.textContent = "Final Standings";
+      if (roundTag) roundTag.textContent = state.roundTitle || "Get Ready";
+
+      cardLobby.innerHTML = `
+        <div style="font-size:42px; margin-bottom:12px; animation:bounce 1s infinite;">🔥</div>
+        <div style="font-family:var(--font-mono); font-size:13px; color:var(--cyan-400); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">
+          Next Challenge Starting
+        </div>
+        <h2 style="font-family:var(--font-display); font-size:24px; margin-bottom:14px; color:#FFFFFF;">
+          ${escapeHtml(state.roundTitle || `Round ${state.roundNum}`)}
+        </h2>
+        <div style="font-family:var(--font-mono); font-size:56px; font-weight:900; color:var(--gold-400); line-height:1; margin-bottom:16px;">
+          ${state.countdown || 3}
+        </div>
+        <p style="color:var(--text-muted); font-size:14px; max-width:360px; margin:0 auto;">
+          Eyes up! Question and options will appear simultaneously on your screen and the presentation stage.
+        </p>
+      `;
+      return;
+    }
+
+    // 2. Interim Round Standings
+    if (state.status === "ROUND_STANDINGS") {
+      cardLobby.style.display = "block";
+      cardActive.style.display = "none";
+      if (roundTag) roundTag.textContent = `Interim Standings · Round ${state.roundNum || 1}`;
 
       const leaderboard = state.leaderboard || [];
-      const myRankIdx = leaderboard.findIndex(p => p.teamId === myTeam.id);
+      const myRankIdx = leaderboard.findIndex(p => (p.teamId === myTeam.id || p.id === myTeam.id));
       const myRank = myRankIdx >= 0 ? myRankIdx + 1 : "-";
       const totalPlayers = leaderboard.length;
 
       cardLobby.innerHTML = `
-        <div style="font-size:48px; margin-bottom:12px;">🏆</div>
-        <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:6px; color:var(--gold-400);">Game Completed!</h2>
-        <div style="font-size:16px; font-weight:700; margin-bottom:16px;">
-          You placed <span style="color:var(--gold-400); font-size:22px; font-family:var(--font-mono);">#${myRank}</span> of ${totalPlayers} players
+        <div style="font-size:42px; margin-bottom:12px;">🏁</div>
+        <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:6px; color:var(--gold-400);">
+          Round ${state.roundNum || 1} Complete!
+        </h2>
+        <div style="font-size:15px; font-weight:700; margin-bottom:16px;">
+          You are currently <span style="color:var(--gold-400); font-size:22px; font-family:var(--font-mono);">#${myRank}</span> of ${totalPlayers} players
         </div>
         <div style="background:var(--charcoal-900); padding:16px; border-radius:var(--radius-md); max-width:320px; margin:0 auto 16px; border:1px solid var(--charcoal-700);">
-          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">Your Final Score</div>
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">Current Balance</div>
           <div style="font-family:var(--font-mono); font-size:28px; font-weight:800; color:var(--gold-400);">${myTeam.xp} XP</div>
         </div>
-        <p style="font-size:13px; color:var(--text-muted);">See the audience projector screen for the official podium!</p>
+        <p style="font-size:13px; color:var(--text-muted);">Check the audience screen for top scores. Host will start the next round shortly!</p>
+      `;
+      return;
+    }
+
+    // 3. Final Championship Results
+    if (state.status === "COMPLETED" || state.status === "RESULTS") {
+      cardLobby.style.display = "block";
+      cardActive.style.display = "none";
+      if (roundTag) roundTag.textContent = "Final Results";
+
+      const leaderboard = state.leaderboard || [];
+      const myRankIdx = leaderboard.findIndex(p => (p.teamId === myTeam.id || p.id === myTeam.id));
+      const myRank = myRankIdx >= 0 ? myRankIdx + 1 : "-";
+      const totalPlayers = leaderboard.length;
+
+      cardLobby.innerHTML = `
+        <div style="font-size:48px; margin-bottom:12px;">👑</div>
+        <h2 style="font-family:var(--font-display); font-size:22px; margin-bottom:6px; color:var(--gold-400);">BOT OR NOT? Completed!</h2>
+        <div style="font-size:16px; font-weight:700; margin-bottom:16px;">
+          Final Position: <span style="color:var(--gold-400); font-size:24px; font-family:var(--font-mono);">#${myRank}</span> of ${totalPlayers} players
+        </div>
+        <div style="background:var(--charcoal-900); padding:16px; border-radius:var(--radius-md); max-width:320px; margin:0 auto 16px; border:1px solid var(--charcoal-700);">
+          <div style="font-size:13px; color:var(--text-muted); margin-bottom:4px;">Final Score</div>
+          <div style="font-family:var(--font-mono); font-size:32px; font-weight:800; color:var(--gold-400);">${myTeam.xp} XP</div>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted);">Congratulations to all participants! Look at the presentation stage for the podium photo.</p>
       `;
       return;
     }
@@ -472,7 +525,8 @@
     const teamSub = (myTeam.answers || {})[q.id];
     const isSubmitted = !!teamSub;
     const isVoided = state.status === "VOIDED";
-    const isLocked = state.status === "LOCKED" || isVoided;
+    const isAudioPlaying = Boolean(state.audioPlaying);
+    const isLocked = state.status === "LOCKED" || isVoided || isAudioPlaying;
     const isRevealed = state.status === "REVEALED" || state.status === "RESULTS";
 
     voidedBanner.style.display = isVoided ? "flex" : "none";
@@ -509,6 +563,16 @@
     } else if (isVoided) {
       submitBar.style.display = "none";
       submittedBanner.style.display = "none";
+    } else if (isAudioPlaying) {
+      submitBar.style.display = "block";
+      submittedBanner.style.display = "none";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "🎧 Listen First (Voting opens after audio)";
+    } else if (state.status === "LOCKED") {
+      submitBar.style.display = "block";
+      submittedBanner.style.display = "none";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "⏳ Submissions Closed · Look at Screen";
     } else {
       submitBar.style.display = "block";
       submittedBanner.style.display = "none";

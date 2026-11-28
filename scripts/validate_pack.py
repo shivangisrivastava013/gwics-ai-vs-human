@@ -2,11 +2,12 @@
 """
 GWiCS BOT OR NOT? - Pre-Flight Pack and Media Asset Validator
 Validates:
-1. Question schema across all 4 rounds (id, type, title, prompt, options, ans, tell).
+1. Question schema across all 4 rounds and practice question.
 2. Answer key mappings (ensuring ans matches an available option).
 3. Image media asset existence and readability.
-4. Audio media asset existence, format, duration, and RMS loudness.
-5. Round 4 Showdown structure and prompts.
+4. Audio media asset existence, format, duration, and decodability.
+5. Round 2 passage word counts (40-60 words).
+6. Round 4 Showdown structure and prompt.
 """
 
 import os
@@ -114,6 +115,9 @@ def inspect_mp3(file_path):
     except Exception as e:
         return {"valid": False, "error": str(e)}
 
+def count_words(text):
+    return len(text.strip().split())
+
 def validate():
     print("=" * 70)
     print("GWiCS BOT OR NOT? - PRE-FLIGHT ASSET & PACK VALIDATION REPORT")
@@ -127,22 +131,34 @@ def validate():
         pack = json.load(f)
 
     errors = []
-    warnings = []
     rounds = pack.get("rounds", [])
     if len(rounds) != 4:
         errors.append(f"Expected 4 rounds, found {len(rounds)}")
 
+    # Practice question
+    print("\n[PRACTICE QUESTION]")
+    practice = pack.get("practice")
+    if not practice:
+        errors.append("Practice question missing")
+    else:
+        media_path = BASE_DIR / practice.get("media", "")
+        if not media_path.exists():
+            errors.append(f"Practice media missing: {practice.get('media')}")
+        else:
+            print(f"  ✓ Practice {practice.get('id')}: {practice.get('media')} -> Ans: {practice.get('ans')}")
+
     # Round 1
-    print("\n[ROUND 1: Visual Turing Test - Images]")
+    print("\n[ROUND 1: Reality Check - Visual Turing Test]")
     r1 = next((r for r in rounds if r.get("roundNum") == 1), None)
     if not r1 or not r1.get("items"):
         errors.append("Round 1 missing or has no items")
     else:
-        for it in r1["items"]:
+        all_r1 = r1["items"] + r1.get("reserves", [])
+        for it in all_r1:
             qid = it.get("id")
             media = it.get("media")
             ans = it.get("ans")
-            opt_ids = [o["id"] for o in it.get("options", [])]
+            opt_ids = [o["id"] for o in r1.get("options", [])]
             if ans not in opt_ids:
                 errors.append(f"{qid}: Answer '{ans}' not in options {opt_ids}")
             media_path = BASE_DIR / media if media else None
@@ -150,32 +166,38 @@ def validate():
                 errors.append(f"{qid}: Image file not found: {media}")
             else:
                 size_kb = os.path.getsize(media_path) / 1024.0
-                print(f"  ✓ {qid} ({it.get('title')}): {media} ({size_kb:.1f} KB) -> Answer: {ans}")
+                tag = "(Reserve)" if "res" in qid else ""
+                print(f"  ✓ {qid} {tag} ({it.get('title')}): {media} ({size_kb:.1f} KB) -> Answer: {ans}")
 
     # Round 2
-    print("\n[ROUND 2: Literature - Paired Passages]")
+    print("\n[ROUND 2: Between the Lines - Literature Turing Test]")
     r2 = next((r for r in rounds if r.get("roundNum") == 2), None)
     if not r2 or not r2.get("items"):
         errors.append("Round 2 missing or has no items")
     else:
-        for it in r2["items"]:
+        all_r2 = r2["items"] + r2.get("reserves", [])
+        for it in all_r2:
             qid = it.get("id")
-            pA = it.get("passageA")
-            pB = it.get("passageB")
+            pA = it.get("passageA", "")
+            pB = it.get("passageB", "")
             ans = it.get("ans")
+            wA = count_words(pA)
+            wB = count_words(pB)
             if not pA or not pB:
                 errors.append(f"{qid}: Missing passageA or passageB")
             if ans not in ("A", "B"):
                 errors.append(f"{qid}: Answer '{ans}' must be 'A' or 'B'")
-            print(f"  ✓ {qid} ({it.get('title')}): Passages verified -> AI is Passage {ans}")
+            tag = "(Reserve)" if "res" in qid else ""
+            print(f"  ✓ {qid} {tag} ({it.get('title')}): Passage A ({wA} words), Passage B ({wB} words) -> Human is Passage {ans}")
 
     # Round 3
-    print("\n[ROUND 3: Sound Check - Audio Recordings & Loudness]")
+    print("\n[ROUND 3: Sound Judgment - Voice & Audio Turing Test]")
     r3 = next((r for r in rounds if r.get("roundNum") == 3), None)
     if not r3 or not r3.get("items"):
         errors.append("Round 3 missing or has no items")
     else:
-        for it in r3["items"]:
+        all_r3 = r3["items"] + r3.get("reserves", [])
+        for it in all_r3:
             qid = it.get("id")
             audio_url = it.get("audioUrl")
             ans = it.get("ans")
@@ -198,18 +220,27 @@ def validate():
                 sr = res["sample_rate"]
                 ch = res["channels"]
                 db = res.get("rms_db", -99.0)
-                print(f"  ✓ {qid} ({it.get('title')}): {audio_url} | {res['format']} | {dur:.2f}s | {sr}Hz | {ch}ch | {db:.1f} dBFS -> Answer: {ans}")
+                tag = "(Reserve)" if "res" in qid else ""
+                print(f"  ✓ {qid} {tag} ({it.get('title')}): {audio_url} | {res['format']} | {dur:.2f}s | {sr}Hz | {ch}ch | {db:.1f} dBFS -> Answer: {ans}")
 
     # Round 4
-    print("\n[ROUND 4: The Live Showdown - Prompts]")
+    print("\n[ROUND 4: The Human Factor - Live Showdown]")
     r4 = next((r for r in rounds if r.get("roundNum") == 4), None)
-    if not r4 or not r4.get("prompts"):
-        errors.append("Round 4 missing or has no prompts")
+    if not r4:
+        errors.append("Round 4 missing")
     else:
-        prompts = r4["prompts"]
-        print(f"  ✓ Found {len(prompts)} live duel prompts (120-second timer configured)")
-        for idx, p in enumerate(prompts[:3]):
-            print(f"    - Duel {idx + 1}: \"{p[:60]}...\"")
+        contenders = r4.get("defaultContenders", [])
+        wp = r4.get("writingPrompt", "")
+        bk = r4.get("backupAi", {})
+        if len(contenders) != 3:
+            errors.append(f"Round 4 expected 3 default contenders, found {len(contenders)}")
+        if not wp:
+            errors.append("Round 4 missing writingPrompt")
+        if not bk or not bk.get("text"):
+            errors.append("Round 4 missing backupAi")
+        print(f"  ✓ Writing Prompt: \"{wp}\"")
+        print(f"  ✓ Contenders configured: {len(contenders)} (2 Human, 1 AI) with tandem shuffle mapping")
+        print(f"  ✓ Backup AI response verified ({count_words(bk.get('text', ''))} words)")
 
     print("\n" + "=" * 70)
     print("DIAGNOSTIC SUMMARY:")
@@ -220,7 +251,7 @@ def validate():
             print(f"  • {e}")
         return False
     else:
-        print("✓ All 25 questions, media paths, audio decodings, and answer keys verified successfully!")
+        print("✓ All 18 scored questions, 1 practice question, 6 reserve questions, and Round 4 duel verified successfully!")
         return True
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Unbounded:wght@600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/game.css?v=20261123c">
+  <link rel="stylesheet" href="css/game.css?v=20261128">
   <style>
     /* Connection status badge */
     .connection-badge {
@@ -632,12 +632,18 @@
           </div>
 
           <!-- Controls Action Strip -->
-          <div class="host-action-strip" style="margin-bottom:20px;">
-            <button class="btn-host-action btn-host-primary" id="btnHostStartQ">
-              ▶ Launch Question & Start Timer
+          <div class="host-action-strip" style="margin-bottom:20px; flex-wrap:wrap; gap:8px;">
+            <button class="btn-host-action btn-host-primary" id="btnHostStartQ" title="Start with 3s Get Ready countdown">
+              ▶ Launch Question (3s Countdown)
+            </button>
+            <button class="btn-host-action" id="btnHostNextQ" title="Advance to next question in sequence">
+              ⏭ Next Question
             </button>
             <button class="btn-host-action" id="btnHostPauseTimer">
               ⏸ Pause / Resume
+            </button>
+            <button class="btn-host-action" id="btnHostReplayRoomAudio" style="border-color:var(--gold-400); color:var(--gold-400);" title="Replay audio on projector for the room (1 allowed)">
+              🔊 Replay Room Audio
             </button>
             <button class="btn-host-action" id="btnHostLock">
               🔒 Lock Submissions
@@ -648,8 +654,11 @@
             <button class="btn-host-action" id="btnHostShowLeaderboard">
               🏆 Round Standings
             </button>
-            <button class="btn-host-action" id="btnHostFinalResults">
+            <button class="btn-host-action" id="btnHostFinalResults" style="border-color:var(--gold-400); color:var(--gold-400);">
               👑 Final Results
+            </button>
+            <button class="btn-host-action" id="btnHostTieBreak" style="border-color:var(--cyan-400); color:var(--cyan-400);" title="Launch sudden-death tie break question">
+              ⚔️ Tie-Break
             </button>
             <button class="btn-host-action" id="btnHostVoid" style="color:var(--color-danger); border-color:var(--color-danger);">
               ✕ Void Question & Refund Hints
@@ -905,9 +914,42 @@
         </div>
       </div>
 
+      <!-- 2b. COUNTDOWN "GET READY" OVERLAY -->
+      <div class="stage-reveal-overlay" id="stageCountdownOverlay" style="display:none; border-color:var(--cyan-500); box-shadow:0 0 60px var(--cyan-glow);">
+        <div style="font-family:var(--font-mono); font-size:clamp(13px, 1.8vh, 20px); color:var(--cyan-400); text-transform:uppercase; letter-spacing:2px; margin-bottom:1vh;">
+          Get Ready
+        </div>
+        <div class="reveal-badge-giant" id="stageCountdownTitle" style="background:var(--cyan-500); color:#000; box-shadow:0 0 30px var(--cyan-glow);">
+          Round 1: Reality Check
+        </div>
+        <div id="stageCountdownNum" style="font-family:var(--font-mono); font-size:clamp(60px, 12vh, 120px); font-weight:900; color:var(--gold-400); line-height:1; margin:2vh 0;">
+          3
+        </div>
+        <div style="font-size:clamp(14px, 1.8vh, 22px); color:var(--text-muted); max-width:min(700px, 70vw);">
+          Look up at the screen. Trust your instincts!
+        </div>
+      </div>
+
+      <!-- 2c. ROOM REACTION / DISTRIBUTION OVERLAY (When Submissions are Locked) -->
+      <div class="stage-reveal-overlay" id="stageDistributionOverlay" style="display:none; border-color:var(--gold-500); box-shadow:0 0 50px var(--gold-glow);">
+        <div style="font-family:var(--font-mono); font-size:clamp(12px, 1.6vh, 18px); color:var(--gold-400); text-transform:uppercase; letter-spacing:2px; margin-bottom:0.8vh;">
+          Submissions Locked · Room Reaction
+        </div>
+        <h2 style="font-family:var(--font-display); font-size:clamp(18px, 2.6vh, 32px); margin-bottom:2vh; color:#FFFFFF;" id="stageDistQTitle">
+          How Did The Room Vote?
+        </h2>
+        <div class="stage-distribution-grid" id="stageDistributionGrid">
+          <!-- Dynamically populated distribution bars -->
+        </div>
+        <div style="margin-top:2.5vh; font-family:var(--font-mono); font-size:clamp(12px, 1.5vh, 16px); color:var(--text-muted);">
+          Holding for host reveal...
+        </div>
+      </div>
+
       <!-- 3. GRAND REVEAL BANNER (Appears when host triggers reveal) -->
       <div class="stage-reveal-overlay" id="stageRevealOverlay" style="display:none;">
         <div class="reveal-badge-giant" id="stageRevealBadge">AI GENERATED</div>
+        <div id="stageRevealSource" style="font-family:var(--font-mono); font-size:clamp(12px, 1.6vh, 18px); color:var(--gold-400); margin-bottom:1.5vh;"></div>
         <div class="reveal-tell-giant" id="stageRevealTell">
           Explanation of forensic tell.
         </div>
@@ -957,12 +999,12 @@
 
   <!-- Scripts: Networking, Modules, and Coordinator -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="js/practice_bank.js?v=20261123c"></script>
-  <script src="js/firebase_config.js?v=20261123c"></script>
-  <script src="js/sync_engine.js?v=20261123c"></script>
-  <script src="js/participant.js?v=20261123c"></script>
-  <script src="js/host.js?v=20261123c"></script>
-  <script src="js/projector.js?v=20261123c"></script>
-  <script src="js/app.js?v=20261123c"></script>
+  <script src="js/practice_bank.js?v=20261128"></script>
+  <script src="js/firebase_config.js?v=20261128"></script>
+  <script src="js/sync_engine.js?v=20261128"></script>
+  <script src="js/participant.js?v=20261128"></script>
+  <script src="js/host.js?v=20261128"></script>
+  <script src="js/projector.js?v=20261128"></script>
+  <script src="js/app.js?v=20261128"></script>
 </body>
 </html>

@@ -26,15 +26,20 @@
       roomCode: DEFAULT_ROOM_CODE,
       sessionId: null,
       packHash: null,
-      status: "LOBBY", // LOBBY, QUESTION, LOCKED, VOIDED, REVEALED, ROUND_STANDINGS, COMPLETED
+      status: "LOBBY", // LOBBY, COUNTDOWN, QUESTION, LOCKED, VOIDED, REVEALED, ROUND_STANDINGS, COMPLETED
       roundNum: 1,
+      roundTitle: "Round 1: Reality Check",
       questionIndex: 0,
-      totalQuestions: 25,
+      totalQuestions: 18,
+      countdown: 3,
+      audioPlaying: false,
+      replaysLeft: 1,
       currentQuestion: null, // Public question payload only (no answer, no tell)
       releasedAnswer: null, // Released ONLY when host triggers reveal
       releasedTell: null,
       releasedSource: null,
       voidReason: null,
+      distribution: null,
       timer: {
         total: 45,
         deadline: 0,
@@ -42,6 +47,7 @@
         running: false
       },
       submittedCount: 0,
+      totalPlayers: 0,
       totalTeams: 0,
       leaderboard: [],
       updatedAt: Date.now()
@@ -547,22 +553,63 @@
       this.emit("stateChange", this.publicState);
     }
 
+    // Start 3-second Get Ready countdown
+    startQuestionCountdown(roundNum, questionIdx) {
+      if (!this.isHost || !this.competitionPack) return;
+      const round = (roundNum === 0 && this.competitionPack.practice)
+        ? { title: "Practice Question", name: "Practice Question" }
+        : this.competitionPack.rounds.find(r => r.roundNum === roundNum);
+      if (!round) return;
+
+      clearInterval(this._countdownInterval);
+      clearInterval(this._timerInterval);
+
+      this.publicState.status = "COUNTDOWN";
+      this.publicState.roundNum = roundNum;
+      this.publicState.roundTitle = round.title || round.name || `Round ${roundNum}`;
+      this.publicState.questionIndex = questionIdx;
+      this.publicState.countdown = 3;
+      this.broadcastState();
+
+      let count = 3;
+      this._countdownInterval = setInterval(() => {
+        count--;
+        this.publicState.countdown = count;
+        if (count <= 0) {
+          clearInterval(this._countdownInterval);
+          this.setQuestion(roundNum, questionIdx);
+        } else {
+          this.broadcastState();
+        }
+      }, 1000);
+    }
+
     // Set new question from host pack — Strips answer and tell before broadcasting!
     setQuestion(roundNum, questionIdx) {
       if (!this.isHost || !this.competitionPack) return;
 
-      const round = this.competitionPack.rounds.find(r => r.roundNum === roundNum);
-      if (!round || !round.items || !round.items[questionIdx]) return;
+      let round = null;
+      let fullItem = null;
 
-      const fullItem = round.items[questionIdx];
+      if (roundNum === 0 && this.competitionPack.practice) {
+        fullItem = this.competitionPack.practice;
+        round = { roundNum: 0, title: "Practice Question", name: "Practice Question", timeLimit: 30 };
+      } else {
+        round = this.competitionPack.rounds.find(r => r.roundNum === roundNum);
+        if (!round || !round.items || !round.items[questionIdx]) return;
+        fullItem = round.items[questionIdx];
+      }
+
       const duration = fullItem.timeLimit || round.timeLimit || 45;
+      const isAudio = fullItem.type === "audio";
+      const listenFirst = Boolean(fullItem.listenFirst || round.listenFirst);
       const deadline = Date.now() + (duration * 1000);
 
       // PUBLIC PAYLOAD: Strictly NO ans and NO tell!
       const publicQuestion = {
         id: fullItem.id,
         roundNum: roundNum,
-        roundName: round.name,
+        roundName: round.title || round.name,
         questionIndex: questionIdx,
         title: fullItem.title,
         prompt: fullItem.prompt,
@@ -577,23 +624,29 @@
         contenders: fullItem.contenders || null,
         options: fullItem.options || [],
         hintAvailable: !!fullItem.hint,
-        timeLimit: duration
+        timeLimit: duration,
+        listenFirst: listenFirst,
+        isPractice: Boolean(fullItem.isPractice)
       };
 
       this.publicState.status = "QUESTION";
       this.publicState.roundNum = roundNum;
+      this.publicState.roundTitle = round.title || round.name;
       this.publicState.questionIndex = questionIdx;
       this.publicState.currentQuestion = publicQuestion;
       this.publicState.releasedAnswer = null;
       this.publicState.releasedTell = null;
       this.publicState.releasedSource = null;
       this.publicState.voidReason = null;
+      this.publicState.distribution = null;
+      this.publicState.audioPlaying = isAudio && listenFirst;
+      this.publicState.replaysLeft = isAudio ? 1 : 0;
       this.publicState.submittedCount = 0;
       this.publicState.timer = {
         total: duration,
         deadline: deadline,
         remaining: duration,
-        running: true
+        running: !(isAudio && listenFirst)
       };
 
       // Reset submitted count from existing teams
@@ -606,7 +659,36 @@
       this.publicState.submittedCount = subCount;
 
       this.broadcastState();
-      this.startTimerInterval();
+      if (this.publicState.timer.running) {
+        this.startTimerInterval();
+      }
+    }
+
+    finishAudioPlayback() {
+      if (!this.isHost) return;
+      if (this.publicState.audioPlaying) {
+        this.publicState.audioPlaying = false;
+        const dur = this.publicState.timer.total || 20;
+        this.publicState.timer.remaining = dur;
+        this.publicState.timer.deadline = Date.now() + (dur * 1000);
+        this.publicState.timer.running = true;
+        this.broadcastState();
+        this.startTimerInterval();
+      }
+    }
+
+    replayAudio() {
+      if (!this.isHost) return;
+      if (this.publicState.replaysLeft > 0) {
+        this.publicState.replaysLeft--;
+        this.publicState.audioPlaying = true;
+        this.publicState.timer.running = false;
+        clearInterval(this._timerInterval);
+        this.broadcastState();
+        if (this.channel) {
+          try { this.channel.postMessage({ type: "REPLAY_AUDIO" }); } catch (e) {}
+        }
+      }
     }
 
     startTimerInterval() {
@@ -644,10 +726,39 @@
       this.broadcastState();
     }
 
+    calculateDistribution() {
+      const q = this.publicState.currentQuestion;
+      if (!q) return null;
+      const counts = {};
+      let totalVotes = 0;
+      (q.options || []).forEach(opt => counts[opt.id] = 0);
+
+      for (const tId in this.teams) {
+        const sub = (this.teams[tId].answers || {})[q.id];
+        if (sub && sub.choice) {
+          if (counts[sub.choice] !== undefined) {
+            counts[sub.choice]++;
+          } else {
+            counts[sub.choice] = 1;
+          }
+          totalVotes++;
+        }
+      }
+
+      const dist = {};
+      for (const optId in counts) {
+        const cnt = counts[optId];
+        const pct = totalVotes > 0 ? Math.round((cnt / totalVotes) * 100) : 0;
+        dist[optId] = { count: cnt, percent: pct };
+      }
+      return { totalVotes, dist };
+    }
+
     lockSubmissions() {
       if (!this.isHost) return;
       this.publicState.status = "LOCKED";
       this.publicState.timer.running = false;
+      this.publicState.distribution = this.calculateDistribution();
       clearInterval(this._timerInterval);
       this.broadcastState();
     }
