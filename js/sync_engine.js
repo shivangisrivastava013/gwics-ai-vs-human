@@ -135,20 +135,38 @@
        AUTHORITATIVE BACKEND & SSE NETWORKING
        ---------------------------------------------------------------------- */
     async checkBackend() {
-      const candidate = window.GWICS_BACKEND_URL || (
-        typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-          ? `http://${window.location.hostname}:3000`
-          : null
-      );
-      if (!candidate) return null;
+      // Priority order:
+      // 1. URL parameter: ?backend=https://...
+      // 2. Global window configuration: window.BOTORNOT_BACKEND_URL or window.GWICS_BACKEND_URL
+      // 3. Stored organizer setting: localStorage.getItem("gwics_backend_url")
+      // 4. Localhost fallback: http://localhost:3000
+      let candidate = null;
       try {
-        const res = await fetch(`${candidate}/api/state`, { signal: AbortSignal.timeout(1200) });
+        if (typeof window !== "undefined" && window.location) {
+          const urlParams = new URLSearchParams(window.location.search);
+          candidate = urlParams.get("backend");
+        }
+      } catch (e) {}
+
+      if (!candidate && typeof window !== "undefined") {
+        candidate = window.BOTORNOT_BACKEND_URL || window.GWICS_BACKEND_URL || localStorage.getItem("gwics_backend_url");
+      }
+
+      if (!candidate && typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+        candidate = `http://${window.location.hostname}:3000`;
+      }
+
+      if (!candidate) return null;
+      candidate = candidate.replace(/\/+$/, "");
+
+      try {
+        const res = await fetch(`${candidate}/api/state`, { signal: AbortSignal.timeout(1500) });
         if (res.ok) {
           const json = await res.json();
           this.backendUrl = candidate;
           this.backendActive = true;
-          if (json && json.state) {
-            this.onRemoteStateUpdate(json.state);
+          if (json && (json.state || json.status)) {
+            this.onRemoteStateUpdate(json.state || json);
           }
           return candidate;
         }
@@ -172,6 +190,12 @@
             const data = JSON.parse(evt.data);
             if (data && data.state) {
               this.onRemoteStateUpdate(data.state);
+            }
+            if (data && data.type === "EVENT_MESSAGE" && data.event) {
+              this.emit("eventMessage", data.event);
+            }
+            if (data && data.type === "REPLAY_AUDIO") {
+              this.emit("eventMessage", { type: "REPLAY_AUDIO" });
             }
             if (data && data.type === "SESSION_RESET") {
               try {
@@ -422,6 +446,10 @@
         if (data.team && data.team.id === this.currentTeamId) {
           this.emit("teamUpdate", data.team);
         }
+      } else if (data.type === "EVENT_MESSAGE" && data.event) {
+        this.emit("eventMessage", data.event);
+      } else if (data.type === "REPLAY_AUDIO") {
+        this.emit("eventMessage", { type: "REPLAY_AUDIO" });
       } else if (data.type === "SUBMIT_ACK" || data.type === "HINT_ACK") {
         this.emit("eventMessage", data);
       }
@@ -664,6 +692,30 @@
       }
     }
 
+    sendProjectorAudioFinished(questionId) {
+      const payload = { type: "PROJECTOR_AUDIO_FINISHED", questionId };
+      // 1. Direct PeerJS WebRTC DataChannel to host
+      if (this.hostConnection && this.hostConnection.open) {
+        try { this.hostConnection.send(payload); } catch (e) {}
+      }
+      // 2. BroadcastChannel to local host window on same machine
+      if (this.channel) {
+        try { this.channel.postMessage(payload); } catch (e) {}
+      }
+      // 3. Authoritative backend endpoint
+      if (this.backendActive && this.backendUrl) {
+        fetch(`${this.backendUrl}/api/projector/audio_finished`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      }
+      // 4. In-process host execution if host is in the same runtime
+      if (this.isHost) {
+        this.finishAudioPlayback();
+      }
+    }
+
     finishAudioPlayback() {
       if (!this.isHost) return;
       if (this.publicState.audioPlaying) {
@@ -685,8 +737,32 @@
         this.publicState.timer.running = false;
         clearInterval(this._timerInterval);
         this.broadcastState();
+
+        const replayMsg = { type: "REPLAY_AUDIO" };
+
+        // 1. Local BroadcastChannel
         if (this.channel) {
-          try { this.channel.postMessage({ type: "REPLAY_AUDIO" }); } catch (e) {}
+          try { this.channel.postMessage(replayMsg); } catch (e) {}
+        }
+
+        // 2. Network PeerJS connections (projector and players)
+        for (const peerId in this.peerConnections) {
+          const conn = this.peerConnections[peerId];
+          if (conn && conn.open) {
+            try { conn.send({ type: "EVENT_MESSAGE", event: replayMsg }); } catch (e) {}
+          }
+        }
+
+        // 3. Authoritative backend REST action
+        if (this.backendActive && this.backendUrl) {
+          fetch(`${this.backendUrl}/api/host/action`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(this.hostToken ? { "Authorization": `Bearer ${this.hostToken}` } : {})
+            },
+            body: JSON.stringify({ action: "REPLAY_AUDIO" })
+          }).catch(() => {});
         }
       }
     }
@@ -1119,6 +1195,14 @@
         if (data.team && data.team.id === this.currentTeamId) {
           this.emit("teamUpdate", data.team);
         }
+      } else if (data.type === "PROJECTOR_AUDIO_FINISHED" && this.isHost) {
+        if (this.publicState.audioPlaying && (!data.questionId || !this.publicState.currentQuestion || data.questionId === this.publicState.currentQuestion.id)) {
+          this.finishAudioPlayback();
+        }
+      } else if (data.type === "REPLAY_AUDIO") {
+        this.emit("eventMessage", { type: "REPLAY_AUDIO" });
+      } else if (data.type === "EVENT_MESSAGE" && data.event) {
+        this.emit("eventMessage", data.event);
       }
     }
 
@@ -1134,6 +1218,14 @@
       if (!this.isHost || !msg) return;
 
       const peerId = msg._peerId;
+
+      // 0. PROJECTOR AUDIO FINISHED
+      if (msg.type === "PROJECTOR_AUDIO_FINISHED") {
+        if (this.publicState.audioPlaying && (!msg.questionId || !this.publicState.currentQuestion || msg.questionId === this.publicState.currentQuestion.id)) {
+          this.finishAudioPlayback();
+        }
+        return;
+      }
 
       // 1. TEAM JOIN
       if (msg.type === "TEAM_JOIN") {

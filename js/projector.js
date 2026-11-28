@@ -29,11 +29,15 @@
           localStorage.removeItem("gwics_game_state");
         } catch (e) {}
         if (evt.state) handleStateUpdate(evt.state);
-      } else if (evt && evt.type === "REPLAY_AUDIO") {
+      } else if (evt && (evt.type === "REPLAY_AUDIO" || evt.action === "REPLAY_AUDIO")) {
         const audioPlayer = document.getElementById("stageAudioPlayer");
+        const audioStatus = document.getElementById("stageAudioStatus");
         if (audioPlayer) {
           audioPlayer.currentTime = 0;
-          audioPlayer.play().catch(() => {});
+          if (audioStatus) audioStatus.textContent = "🔊 Replaying room audio...";
+          audioPlayer.play().catch(() => {
+            if (audioStatus) audioStatus.textContent = "▶ Press play to begin audio replay";
+          });
         }
       }
     });
@@ -259,7 +263,9 @@
         audioPlayer.onpause = () => { if (audioStatus) audioStatus.textContent = "⏸ Paused"; };
         audioPlayer.onended = () => {
           if (audioStatus) audioStatus.textContent = "✓ Audio completed · Voting open!";
-          if (state.audioPlaying && Engine && typeof Engine.finishAudioPlayback === "function") {
+          if (Engine && typeof Engine.sendProjectorAudioFinished === "function") {
+            Engine.sendProjectorAudioFinished(q.id);
+          } else if (state.audioPlaying && Engine && typeof Engine.finishAudioPlayback === "function") {
             Engine.finishAudioPlayback();
           }
         };

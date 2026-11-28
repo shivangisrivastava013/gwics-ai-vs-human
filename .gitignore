@@ -1,6 +1,8 @@
 # Local Organizer Secrets & Private Keys
 local_organizer_vault/
 *_vault/
+scripts/build_*.py
+scripts/generate_*.py
 *.xlsx
 secrets/
 .env*

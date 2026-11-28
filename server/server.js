@@ -293,6 +293,45 @@ function handleApi(req, res) {
     return;
   }
 
+  // 3c. Projector Audio Finished Handshake (Opens voting & starts timer)
+  if (pathname === "/api/projector/audio_finished" && req.method === "POST") {
+    readJson((err, body) => {
+      const qid = body ? (body.questionId || body.qid) : null;
+      if (publicState.audioPlaying && (!qid || !publicState.currentQuestion || qid === publicState.currentQuestion.id)) {
+        publicState.audioPlaying = false;
+        const timeLimit = publicState.timer.total || 20;
+        publicState.timer.remaining = timeLimit;
+        publicState.timer.deadline = Date.now() + timeLimit * 1000;
+        publicState.timer.running = true;
+
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          if (!publicState.timer.running) return;
+          const left = Math.max(0, Math.round((publicState.timer.deadline - Date.now()) / 1000));
+          publicState.timer.remaining = left;
+          if (left <= 0) {
+            publicState.timer.running = false;
+            publicState.status = "LOCKED";
+            publicState.distribution = calculateDistribution();
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+          broadcast();
+        }, 1000);
+
+        broadcast();
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        success: true,
+        audioPlaying: publicState.audioPlaying,
+        timerRunning: publicState.timer.running,
+        remaining: publicState.timer.remaining
+      }));
+    });
+    return;
+  }
+
   // 4. Host Login
   if (pathname === "/api/host/login" && req.method === "POST") {
     readJson((err, body) => {
@@ -545,6 +584,12 @@ function handleApi(req, res) {
           publicState.timer.running = false;
           if (timerInterval) clearInterval(timerInterval);
           broadcast();
+
+          // Dispatch event to SSE clients so projector replays audio
+          const replayEvent = JSON.stringify({ type: "EVENT_MESSAGE", event: { type: "REPLAY_AUDIO" } });
+          for (const client of sseClients) {
+            try { client.write(`data: ${replayEvent}\n\n`); } catch (e) { sseClients.delete(client); }
+          }
         }
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true, replaysLeft: publicState.replaysLeft }));

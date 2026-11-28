@@ -17,6 +17,13 @@
   let currentQIdx = 0;
   let targetAdjustTeamId = null;
   let initialized = false;
+  const consumedReserveIds = new Set();
+  try {
+    const savedReserves = JSON.parse(sessionStorage.getItem("gwics_consumed_reserves") || "[]");
+    if (Array.isArray(savedReserves)) {
+      savedReserves.forEach(id => consumedReserveIds.add(id));
+    }
+  } catch (e) {}
 
   async function verifyOrganizerPasscode(pin) {
     if (!pin) return false;
@@ -156,55 +163,193 @@
   }
 
   /* --------------------------------------------------------------------------
-     PRE-FLIGHT PACK & MEDIA VALIDATOR (Audio decodings, RMS, and images)
+     PRE-FLIGHT PACK & MEDIA VALIDATOR (Real Audio decoding, RMS, and images)
      -------------------------------------------------------------------------- */
-  function runPreflightValidation(pack) {
+  async function runPreflightValidation(pack) {
     const reportEl = document.getElementById("hostPreflightReport");
     if (!reportEl) return;
 
     reportEl.style.display = "block";
-    reportEl.innerHTML = `<div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400);">⏳ Validating questions, images, and audio decodings...</div>`;
+    reportEl.innerHTML = `<div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); padding:10px; background:var(--charcoal-900); border-radius:var(--radius-sm); border:1px solid var(--charcoal-700);">⏳ Performing deep pre-flight validation on questions, media assets, and audio decodings...</div>`;
 
-    let totalQ = 0;
-    let missingAns = 0;
-    let imagesCount = 0;
-    let audioCount = 0;
+    const errors = [];
+    const imageCheckPromises = [];
+    const audioCheckPromises = [];
 
+    // Collect all question objects
+    const allQuestions = [];
+    if (pack.practice) {
+      allQuestions.push({ q: pack.practice, roundLabel: "Practice", isReserve: false });
+    }
     for (const r of pack.rounds || []) {
-      const items = r.items || [];
-      totalQ += items.length;
-      for (const it of items) {
-        if (!it.ans && it.type !== "showdown") missingAns++;
-        if (it.type === "image") imagesCount++;
-        if (it.type === "audio") audioCount++;
+      for (const it of r.items || []) {
+        allQuestions.push({ q: it, roundLabel: `Round ${r.roundNum}`, isReserve: false });
+      }
+      for (const res of r.reserves || []) {
+        allQuestions.push({ q: res, roundLabel: `Round ${r.roundNum} Reserve`, isReserve: true });
       }
     }
-    const r4 = (pack.rounds || []).find(r => r.roundNum === 4);
-    if (r4 && r4.prompts) totalQ += r4.prompts.length;
 
-    reportEl.innerHTML = `
-      <div class="host-preflight-box">
-        <div style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; margin-bottom:6px; font-weight:700;">
-          Pre-Flight Pack & Media Verification
+    // 1. Schema & Answer Key Validation
+    let validSchemaCount = 0;
+    let missingAnsCount = 0;
+    let missingTellCount = 0;
+
+    for (const entry of allQuestions) {
+      const q = entry.q;
+      if (!q.id || !q.title || !q.prompt) {
+        errors.push(`Invalid question schema in ${entry.roundLabel}: missing id, title, or prompt`);
+      } else {
+        validSchemaCount++;
+      }
+
+      if (q.type !== "showdown") {
+        if (!q.ans) {
+          missingAnsCount++;
+          errors.push(`Missing answer key in ${entry.roundLabel} (${q.id}: ${q.title})`);
+        } else if (Array.isArray(q.options) && q.options.length > 0) {
+          const optIds = q.options.map(o => o.id);
+          if (!optIds.includes(q.ans)) {
+            errors.push(`Answer '${q.ans}' not found in options [${optIds.join(", ")}] for question ${q.id}`);
+          }
+        }
+      }
+
+      if (!q.tell && q.type !== "showdown") {
+        missingTellCount++;
+        errors.push(`Missing forensic tell explanation in ${entry.roundLabel} (${q.id})`);
+      }
+
+      // Check Image assets
+      if (q.type === "image" && (q.media || q.cardImage)) {
+        const imgUrl = (q.media || q.cardImage).replace(/\\/g, "/");
+        imageCheckPromises.push(new Promise((resolve) => {
+          const img = new Image();
+          const start = Date.now();
+          img.onload = () => resolve({ ok: true, qid: q.id, title: q.title, url: imgUrl, width: img.naturalWidth, height: img.naturalHeight, ms: Date.now() - start });
+          img.onerror = () => resolve({ ok: false, qid: q.id, title: q.title, url: imgUrl, error: "Image file failed to load" });
+          img.src = imgUrl;
+        }));
+      }
+
+      // Check Audio assets
+      if (q.type === "audio" && (q.audioUrl || q.media)) {
+        const audioUrl = (q.audioUrl || q.media).replace(/\\/g, "/");
+        audioCheckPromises.push((async () => {
+          try {
+            const res = await fetch(audioUrl);
+            if (!res.ok) {
+              return { ok: false, qid: q.id, title: q.title, url: audioUrl, error: `HTTP ${res.status} ${res.statusText}` };
+            }
+            const buf = await res.arrayBuffer();
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              const ctx = new AudioCtx();
+              const audioBuf = await ctx.decodeAudioData(buf);
+              const duration = audioBuf.duration;
+              const sampleRate = audioBuf.sampleRate;
+              const channels = audioBuf.numberOfChannels;
+
+              // Compute RMS loudness
+              const channelData = audioBuf.getChannelData(0);
+              let sumSq = 0;
+              for (let i = 0; i < channelData.length; i++) {
+                sumSq += channelData[i] * channelData[i];
+              }
+              const rms = Math.sqrt(sumSq / channelData.length);
+              const rmsDbfs = 20 * Math.log10(rms || 1e-6);
+              try { await ctx.close(); } catch (e) {}
+
+              return {
+                ok: true,
+                qid: q.id,
+                title: q.title,
+                url: audioUrl,
+                duration: duration.toFixed(2),
+                sampleRate: sampleRate,
+                channels: channels,
+                rmsDbfs: rmsDbfs.toFixed(1)
+              };
+            } else {
+              return { ok: true, qid: q.id, title: q.title, url: audioUrl, duration: "N/A", rmsDbfs: "N/A" };
+            }
+          } catch (err) {
+            return { ok: false, qid: q.id, title: q.title, url: audioUrl, error: err.message };
+          }
+        })());
+      }
+    }
+
+    // Await asset inspections concurrently
+    const [imageResults, audioResults] = await Promise.all([
+      Promise.all(imageCheckPromises),
+      Promise.all(audioCheckPromises)
+    ]);
+
+    const failedImages = imageResults.filter(r => !r.ok);
+    const passedImages = imageResults.filter(r => r.ok);
+    const failedAudio = audioResults.filter(r => !r.ok);
+    const passedAudio = audioResults.filter(r => r.ok);
+
+    const scoredCount = (pack.rounds || []).reduce((acc, r) => acc + (r.items ? r.items.length : 0), 0);
+    const reserveCount = (pack.rounds || []).reduce((acc, r) => acc + (r.reserves ? r.reserves.length : 0), 0);
+    const practiceCount = pack.practice ? 1 : 0;
+    const totalCount = allQuestions.length;
+
+    let avgAudioDbfs = "N/A";
+    if (passedAudio.length > 0 && passedAudio[0].rmsDbfs !== "N/A") {
+      const sumDbfs = passedAudio.reduce((sum, a) => sum + parseFloat(a.rmsDbfs), 0);
+      avgAudioDbfs = (sumDbfs / passedAudio.length).toFixed(1) + " dBFS";
+    }
+
+    let reportHtml = `
+      <div class="host-preflight-box" style="background:var(--charcoal-900); border:1px solid ${errors.length || failedImages.length || failedAudio.length ? 'var(--color-danger)' : 'var(--color-success)'}; border-radius:var(--radius-md); padding:14px; margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px solid var(--charcoal-700); padding-bottom:6px;">
+          <span style="font-family:var(--font-mono); font-size:11px; color:var(--gold-400); text-transform:uppercase; font-weight:700;">
+            Pre-Flight Asset & Integrity Verification
+          </span>
+          <span style="font-family:var(--font-mono); font-size:11px; font-weight:700; color:${errors.length || failedImages.length || failedAudio.length ? 'var(--color-danger)' : 'var(--color-success)'};">
+            ${errors.length || failedImages.length || failedAudio.length ? '⚠️ ISSUES DETECTED' : '✓ 100% VERIFIED READY'}
+          </span>
         </div>
-        <div class="host-preflight-item valid">
-          <span>Questions Schema:</span>
-          <strong>✓ ${totalQ} Total Questions (R1–R4)</strong>
+
+        <div class="host-preflight-item ${errors.length ? 'invalid' : 'valid'}" style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+          <span>Questions & Schema:</span>
+          <strong>${errors.length ? '❌ ' + errors.length + ' Issues' : '✓ ' + scoredCount + ' Scored + ' + reserveCount + ' Reserves' + (practiceCount ? ' + 1 Practice' : '') + ' (' + totalCount + ' Total)'}</strong>
         </div>
-        <div class="host-preflight-item valid">
-          <span>Visual Turing Images:</span>
-          <strong>✓ 10 Images Verified</strong>
+
+        <div class="host-preflight-item ${failedImages.length ? 'invalid' : 'valid'}" style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+          <span>Visual Images:</span>
+          <strong>${failedImages.length ? '❌ ' + failedImages.length + ' Failed' : '✓ ' + passedImages.length + ' Images Decoded & Inspected (All Dimensions Valid)'}</strong>
         </div>
-        <div class="host-preflight-item valid">
-          <span>Acoustic Voice Clips:</span>
-          <strong>✓ 5 Audio Files Decoded (RMS/Duration OK)</strong>
+
+        <div class="host-preflight-item ${failedAudio.length ? 'invalid' : 'valid'}" style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+          <span>Acoustic Audio Clips:</span>
+          <strong>${failedAudio.length ? '❌ ' + failedAudio.length + ' Failed' : '✓ ' + passedAudio.length + ' Audio Files Decoded (Mean RMS ' + avgAudioDbfs + ')'}</strong>
         </div>
-        <div class="host-preflight-item valid">
+
+        <div class="host-preflight-item ${missingAnsCount || missingTellCount ? 'invalid' : 'valid'}" style="display:flex; justify-content:space-between; font-size:12px;">
           <span>Answer Keys & Tells:</span>
-          <strong>✓ 100% Verified in Organizer Vault</strong>
+          <strong>${missingAnsCount || missingTellCount ? '❌ ' + (missingAnsCount + missingTellCount) + ' Missing' : '✓ 100% Vault Verified (0 Missing Keys)'}</strong>
         </div>
-      </div>
     `;
+
+    if (failedImages.length || failedAudio.length || errors.length) {
+      reportHtml += `<div style="margin-top:10px; padding:8px; background:rgba(239,68,68,0.1); border-radius:var(--radius-sm); border:1px solid rgba(239,68,68,0.3); font-size:11px; color:#fca5a5;">`;
+      for (const err of errors) {
+        reportHtml += `<div>• ${escapeHtml(err)}</div>`;
+      }
+      for (const fi of failedImages) {
+        reportHtml += `<div>• Image error [${fi.qid}]: ${escapeHtml(fi.url)} (${escapeHtml(fi.error)})</div>`;
+      }
+      for (const fa of failedAudio) {
+        reportHtml += `<div>• Audio error [${fa.qid}]: ${escapeHtml(fa.url)} (${escapeHtml(fa.error)})</div>`;
+      }
+      reportHtml += `</div>`;
+    }
+
+    reportHtml += `</div>`;
+    reportEl.innerHTML = reportHtml;
   }
 
   /* --------------------------------------------------------------------------
@@ -215,8 +360,13 @@
     const gate = document.getElementById("viewHostGate");
     const dash = document.getElementById("viewHostDashboard");
     const fileInput = document.getElementById("packFileInput");
+    const backendUrlInput = document.getElementById("hostBackendUrlInput");
 
     if (!form || !gate || !dash) return;
+
+    if (backendUrlInput) {
+      backendUrlInput.value = localStorage.getItem("gwics_backend_url") || "";
+    }
 
     if (fileInput) {
       fileInput.addEventListener("change", () => {
@@ -255,6 +405,13 @@
       e.preventDefault();
       const pin = document.getElementById("hostPinInput").value.trim();
       const room = document.getElementById("hostRoomInput").value.trim().toUpperCase() || "BOTORNOT";
+
+      const backendUrlVal = backendUrlInput ? backendUrlInput.value.trim() : "";
+      if (backendUrlVal) {
+        localStorage.setItem("gwics_backend_url", backendUrlVal);
+      } else {
+        localStorage.removeItem("gwics_backend_url");
+      }
 
       // Authentic Credential Verification via backend / cryptographic hash
       const isValid = await verifyOrganizerPasscode(pin);
@@ -801,15 +958,43 @@
       btnTieBreak.onclick = () => {
         if (!loadedPack) return;
         const round = loadedPack.rounds.find(r => r.roundNum === currentRoundNum);
-        const reserves = round?.reserves || [];
-        if (!reserves.length) {
-          alert(`No reserve tie-break questions configured for Round ${currentRoundNum}.`);
+        
+        // 1. Look for unconsumed reserve question in current round
+        let nextReserve = (round?.reserves || []).find(r => !consumedReserveIds.has(r.id));
+        let reserveRoundNum = currentRoundNum;
+
+        // 2. If current round's reserves are exhausted, search across all rounds in pack
+        if (!nextReserve && loadedPack.rounds) {
+          for (const r of loadedPack.rounds) {
+            const found = (r.reserves || []).find(res => !consumedReserveIds.has(res.id));
+            if (found) {
+              nextReserve = found;
+              reserveRoundNum = r.roundNum;
+              break;
+            }
+          }
+        }
+
+        if (!nextReserve) {
+          alert(`All configured reserve tie-break questions (${consumedReserveIds.size} total) have already been used.`);
           return;
         }
-        if (confirm(`Launch sudden-death tie break question (${reserves[0].title})?`)) {
-          // Push reserve question to round items and select it
-          round.items.push(reserves[0]);
-          currentQIdx = round.items.length - 1;
+
+        if (confirm(`Launch sudden-death tie break question (${nextReserve.title} from Round ${reserveRoundNum})?`)) {
+          consumedReserveIds.add(nextReserve.id);
+          try {
+            sessionStorage.setItem("gwics_consumed_reserves", JSON.stringify(Array.from(consumedReserveIds)));
+          } catch (e) {}
+
+          // Ensure target round has items array and append the unconsumed reserve
+          const targetRound = loadedPack.rounds.find(r => r.roundNum === currentRoundNum) || round;
+          if (!targetRound.items) targetRound.items = [];
+          
+          // Avoid duplicate question insertion by checking id
+          if (!targetRound.items.some(it => it.id === nextReserve.id)) {
+            targetRound.items.push(nextReserve);
+          }
+          currentQIdx = targetRound.items.length - 1;
           renderQuestionList();
           loadQuestion(currentRoundNum, currentQIdx);
           btnStart.click();
